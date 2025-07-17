@@ -15,8 +15,8 @@ class CTB_Frontend {
     
     private function __construct() {
         add_filter('template_include', [$this, 'template_include'], 99);
-        add_action('wp_head', [$this, 'inject_header_template'], 1);
-        add_action('wp_footer', [$this, 'inject_footer_template'], 999);
+        add_action('wp_body_open', [$this, 'inject_header_template'], 1);
+        add_action('wp_footer', [$this, 'inject_footer_template'], 1);
     }
     
     public function template_include($template) {
@@ -123,24 +123,56 @@ class CTB_Frontend {
     }
     
     public function inject_header_template() {
-        $header_template = $this->get_matching_template();
+        // Find header templates specifically
+        $templates = get_posts([
+            'post_type' => 'ctb_template',
+            'post_status' => 'publish',
+            'numberposts' => -1
+        ]);
         
-        if ($header_template && $this->get_template_type($header_template) === 'header') {
-            echo '<style>.site-header, header { display: none !important; }</style>';
-            echo '<div class="ctb-header-template">';
-            echo $this->get_template_content($header_template);
-            echo '</div>';
+        foreach ($templates as $template) {
+            $title_lower = strtolower($template->post_title);
+            
+            // Check if this is a header template
+            if (strpos($title_lower, 'header') !== false) {
+                // Check if conditions match (if any)
+                $conditions = get_post_meta($template->ID, '_ctb_conditions', true);
+                
+                if (empty($conditions) || CTB_Conditions::evaluate_conditions($conditions)) {
+                    echo '<style>.site-header, header, .header { display: none !important; }</style>';
+                    echo '<div class="ctb-header-template" style="width: 100%; z-index: 9999;">';
+                    echo $this->get_template_content($template->ID);
+                    echo '</div>';
+                    break; // Only show first matching header
+                }
+            }
         }
     }
     
     public function inject_footer_template() {
-        $footer_template = $this->get_matching_template();
+        // Find footer templates specifically
+        $templates = get_posts([
+            'post_type' => 'ctb_template',
+            'post_status' => 'publish',
+            'numberposts' => -1
+        ]);
         
-        if ($footer_template && $this->get_template_type($footer_template) === 'footer') {
-            echo '<style>.site-footer, footer { display: none !important; }</style>';
-            echo '<div class="ctb-footer-template">';
-            echo $this->get_template_content($footer_template);
-            echo '</div>';
+        foreach ($templates as $template) {
+            $title_lower = strtolower($template->post_title);
+            
+            // Check if this is a footer template
+            if (strpos($title_lower, 'footer') !== false) {
+                // Check if conditions match (if any)
+                $conditions = get_post_meta($template->ID, '_ctb_conditions', true);
+                
+                if (empty($conditions) || CTB_Conditions::evaluate_conditions($conditions)) {
+                    echo '<style>.site-footer, footer, .footer { display: none !important; }</style>';
+                    echo '<div class="ctb-footer-template" style="width: 100%; z-index: 9999;">';
+                    echo $this->get_template_content($template->ID);
+                    echo '</div>';
+                    break; // Only show first matching footer
+                }
+            }
         }
     }
 }
