@@ -403,11 +403,13 @@ class CTB_Frontend {
         // Emergency footer template
         add_action('wp_footer', [$this, 'emergency_footer_template'], 0);
         
-        // Emergency product template - try multiple detection methods
-        if ((function_exists('is_product') && is_product()) || 
-            is_singular('product') || 
-            get_post_type() === 'product') {
-            add_filter('the_content', [$this, 'emergency_product_template'], 999);
+        // Emergency product template - force it to work on all pages initially
+        add_filter('the_content', [$this, 'emergency_product_template'], 999);
+        
+        // Also try WooCommerce specific hooks
+        if (class_exists('WooCommerce')) {
+            add_action('woocommerce_single_product_summary', [$this, 'force_product_template'], 5);
+            add_filter('woocommerce_single_product_content', [$this, 'emergency_product_template'], 999);
         }
     }
     
@@ -548,6 +550,36 @@ class CTB_Frontend {
         }
         
         return $content;
+    }
+    
+    /**
+     * Force product template via WooCommerce hooks
+     */
+    public function force_product_template() {
+        if (function_exists('error_log')) {
+            error_log('CTB Debug: force_product_template called via WooCommerce hook');
+        }
+        
+        // Get ALL templates with "product" in title
+        $all_templates = get_posts([
+            'post_type' => 'ctb_template',
+            'post_status' => 'publish',
+            'posts_per_page' => -1
+        ]);
+        
+        foreach ($all_templates as $template) {
+            if (stripos($template->post_title, 'product') !== false) {
+                if (function_exists('error_log')) {
+                    error_log('CTB Debug: Forcing product template via WooCommerce hook: ' . $template->post_title);
+                }
+                
+                $template_content = $this->get_template_content($template->ID);
+                if ($template_content) {
+                    echo '<div class="forced-product-template">' . $template_content . '</div>';
+                }
+                break;
+            }
+        }
     }
 
 }
