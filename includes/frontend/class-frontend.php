@@ -511,78 +511,100 @@ class CTB_Frontend {
         // Create temporary template file with proper styling
         $temp_template = get_temp_dir() . 'ctb-product-template.php';
         
-        $template_content = '<?php
-        // Custom Theme Builder Product Template with dynamic data
-        get_header(); 
-        
-        // Get current product data
-        global $post, $product;
-        if (!$product) {
-            $product = wc_get_product($post->ID);
+        $template_content = '<!DOCTYPE html>
+<html <?php language_attributes(); ?>>
+<head>
+    <meta charset="<?php bloginfo("charset"); ?>">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <?php wp_head(); ?>
+    <style>
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #ffffff;
+        line-height: 1.6;
+    }
+    .ctb-full-template {
+        width: 100vw;
+        min-height: 100vh;
+        padding: 0;
+        margin: 0;
+        background: #ffffff;
+        overflow-x: hidden;
+    }
+    .ctb-template-wrapper {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 20px;
+        background: #fff;
+    }
+    .ctb-template-wrapper * {
+        box-sizing: border-box;
+    }
+    .ctb-template-wrapper img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 20px 0;
+    }
+    .ctb-template-wrapper p {
+        margin-bottom: 1.2em;
+        line-height: 1.7;
+        font-size: 16px;
+        color: #333;
+    }
+    .ctb-template-wrapper h1,
+    .ctb-template-wrapper h2,
+    .ctb-template-wrapper h3 {
+        margin-top: 2em;
+        margin-bottom: 0.8em;
+        color: #222;
+        font-weight: 600;
+    }
+    .ctb-template-wrapper h1 { font-size: 2.5em; }
+    .ctb-template-wrapper h2 { font-size: 2em; }
+    .ctb-template-wrapper h3 { font-size: 1.5em; }
+    
+    /* Block editor styles */
+    .ctb-template-wrapper .wp-block-group {
+        margin: 2em 0;
+    }
+    .ctb-template-wrapper .wp-block-columns {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+    .ctb-template-wrapper .wp-block-column {
+        flex: 1;
+        min-width: 250px;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .ctb-template-wrapper {
+            padding: 20px 15px;
         }
-        ?>
-        
-        <style>
-        .ctb-custom-product-template {
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background: #fff;
-            min-height: 500px;
-            clear: both;
+        .ctb-template-wrapper h1 { font-size: 2em; }
+        .ctb-template-wrapper h2 { font-size: 1.5em; }
+        .ctb-template-wrapper .wp-block-columns {
+            flex-direction: column;
         }
-        .ctb-custom-product-template * {
-            box-sizing: border-box;
-        }
-        .ctb-custom-product-template img {
-            max-width: 100%;
-            height: auto;
-            display: block;
-        }
-        .ctb-custom-product-template p {
-            margin-bottom: 1em;
-            line-height: 1.6;
-        }
-        .ctb-custom-product-template h1,
-        .ctb-custom-product-template h2,
-        .ctb-custom-product-template h3 {
-            margin-top: 1.5em;
-            margin-bottom: 0.5em;
-        }
-        .ctb-debug-info {
-            background: #f1f1f1;
-            padding: 10px;
-            margin: 10px 0;
-            border-left: 4px solid #0073aa;
-            font-family: monospace;
-            font-size: 12px;
-        }
-        </style>
-        
-        <div class="ctb-custom-product-template">
-            <?php if ($product): ?>
-                <div class="ctb-debug-info">
-                    <strong>Product Data Available:</strong><br>
-                    ID: <?php echo $product->get_id(); ?><br>
-                    Name: <?php echo $product->get_name(); ?><br>
-                    Price: <?php echo $product->get_price_html(); ?><br>
-                    Type: <?php echo $product->get_type(); ?>
-                </div>
-            <?php else: ?>
-                <div class="ctb-debug-info">
-                    <strong>No Product Data Found</strong><br>
-                    Post ID: <?php echo $post->ID ?? "No Post"; ?><br>
-                    Post Type: <?php echo $post->post_type ?? "Unknown"; ?>
-                </div>
-            <?php endif; ?>
-            
-            <div class="ctb-template-content">
-                ' . $content . '
-            </div>
+    }
+    </style>
+</head>
+<body <?php body_class("ctb-custom-template"); ?>>
+    <?php wp_body_open(); ?>
+    
+    <div class="ctb-full-template">
+        <div class="ctb-template-wrapper">
+            ' . $content . '
         </div>
-        
-        <?php get_footer();';
+    </div>
+    
+    <?php wp_footer(); ?>
+</body>
+</html>';
         
         file_put_contents($temp_template, $template_content);
         
