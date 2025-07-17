@@ -60,8 +60,8 @@ class CTB_Frontend {
         add_action('wp_body_open', [$this, 'inject_header_template'], 1);
         add_action('wp_footer', [$this, 'inject_footer_template'], 1);
         
-        // Emergency fallback system
-        add_action('template_redirect', [$this, 'emergency_template_system']);
+        // Product template override
+        add_filter('template_include', [$this, 'override_product_template'], 99);
         
         // Preview functionality
 
@@ -389,28 +389,7 @@ class CTB_Frontend {
         }
     }
 
-    /**
-     * Emergency template system - Force templates to work
-     */
-    public function emergency_template_system() {
-        if (is_admin()) {
-            return;
-        }
-        
-        // Emergency header template
-        add_action('wp_head', [$this, 'emergency_header_template'], 0);
-        
-        // Emergency footer template
-        add_action('wp_footer', [$this, 'emergency_footer_template'], 0);
-        
-        // Direct template override - replaces entire template
-        add_filter('template_include', [$this, 'override_product_template'], 99);
-        
-        // Disable WooCommerce template loading to prevent conflicts
-        remove_action('wp_head', 'wc_print_js', 25);
-        remove_action('wp_head', 'woocommerce_output_content_wrapper', 10);
-        add_filter('woocommerce_template_loader_files', '__return_empty_array', 99);
-    }
+
     
     /**
      * Emergency header template
@@ -489,12 +468,10 @@ class CTB_Frontend {
      * Override product template completely
      */
     public function override_product_template($template) {
-        // Only on single product pages
         if (!is_singular('product')) {
             return $template;
         }
         
-        // Find templates with "product" in title
         $templates = get_posts([
             'post_type' => 'ctb_template',
             'post_status' => 'publish',
@@ -506,88 +483,34 @@ class CTB_Frontend {
             return $template;
         }
         
-        $template_post = $templates[0];
-        $content = get_post_field('post_content', $template_post->ID);
+        $content = get_post_field('post_content', $templates[0]->ID);
         
         if (empty($content)) {
             return $template;
         }
         
-        // Create temporary template file with proper styling
         $temp_template = get_temp_dir() . 'ctb-product-template.php';
         
         $template_content = '<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Custom Product Template</title>
-    <style>
-        body { 
-            margin: 0; 
-            padding: 0; 
-            font-family: Arial, sans-serif; 
-            background: #f5f5f5; 
-        }
-        .ctb-container {
-            max-width: 1200px;
-            margin: 50px auto;
-            padding: 40px;
-            background: white;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            line-height: 1.6;
-            color: #333;
-        }
-        .ctb-header {
-            border-bottom: 3px solid #0073aa;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-        }
-        .ctb-title {
-            margin: 0;
-            color: #0073aa;
-            font-size: 2.5em;
-        }
-        .ctb-subtitle {
-            margin: 10px 0 0 0;
-            color: #666;
-            font-size: 16px;
-        }
-        .ctb-content {
-            background: #f9f9f9;
-            padding: 20px;
-            border-left: 4px solid #0073aa;
-            margin: 20px 0;
-            white-space: pre-line;
-        }
-        .ctb-footer {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-            color: #999;
-            font-size: 14px;
-        }
-    </style>
+    <title>Product</title>
 </head>
 <body>
-    <div class="ctb-container">
-        <div class="ctb-header">
-            <h1 class="ctb-title">Custom Product Template</h1>
-            <p class="ctb-subtitle">Template is loading correctly</p>
+    <div style="max-width:1200px;margin:50px auto;padding:40px;background:white;box-shadow:0 0 20px rgba(0,0,0,0.1);">
+        <div style="border-bottom:3px solid #0073aa;padding-bottom:20px;margin-bottom:30px;">
+            <h1 style="margin:0;color:#0073aa;">Custom Product Template</h1>
         </div>
-        
-        <div class="ctb-content">' . $content . '</div>
-        
-        <div class="ctb-footer">
-            Template loaded via Custom Theme Builder Plugin
+        <div style="background:#f9f9f9;padding:20px;border-left:4px solid #0073aa;">
+            ' . $content . '
         </div>
     </div>
 </body>
 </html>';
         
         file_put_contents($temp_template, $template_content);
-        
         return $temp_template;
     }
     
