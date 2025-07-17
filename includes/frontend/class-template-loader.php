@@ -564,6 +564,45 @@ class CTB_Template_Loader {
     }
     
     /**
+     * Detect template type based on conditions
+     */
+    public static function get_template_type($template_id) {
+        $conditions = CTB_Conditions::get_template_conditions($template_id);
+        
+        if (empty($conditions)) {
+            return 'content';
+        }
+        
+        // Check for header/footer specific conditions
+        foreach ($conditions as $condition) {
+            $type = $condition['type'];
+            
+            // Header templates
+            if (in_array($type, ['header'])) {
+                return 'header';
+            }
+            
+            // Footer templates  
+            if (in_array($type, ['footer'])) {
+                return 'footer';
+            }
+            
+            // Full page templates (replace entire page)
+            if (in_array($type, ['entire_site', 'front_page', 'error_404', 'search_results'])) {
+                return 'full_page';
+            }
+            
+            // Archive templates (full page)
+            if (in_array($type, ['archive', 'category', 'tag', 'author', 'date', 'woocommerce_shop', 'woocommerce_product_category'])) {
+                return 'full_page';
+            }
+        }
+        
+        // Default to content replacement for single posts, pages, etc.
+        return 'content';
+    }
+    
+    /**
      * Clear cache
      */
     public static function clear_cache() {

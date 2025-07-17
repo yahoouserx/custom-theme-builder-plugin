@@ -182,8 +182,19 @@ class CTB_Frontend {
             // Store the template ID for later use
             $this->current_template_id = $custom_template;
             
-            // Use our custom template loader
-            return $this->get_plugin_template_path();
+            // Get template type to determine how to handle it
+            $template_type = CTB_Template_Loader::get_template_type($custom_template);
+            
+            // Only replace full template for full_page types
+            if ($template_type === 'full_page') {
+                return $this->get_plugin_template_path();
+            }
+            
+            // For content-only templates, use content replacement hooks
+            if ($template_type === 'content') {
+                add_filter('the_content', [$this, 'replace_content'], 999);
+                add_filter('single_post_title', [$this, 'maybe_replace_title'], 999);
+            }
         }
         
         return $template;
@@ -240,6 +251,36 @@ class CTB_Frontend {
         
         // Fallback to post content
         return apply_filters('the_content', $post->post_content);
+    }
+    
+    /**
+     * Replace content for content-only templates
+     */
+    public function replace_content($content) {
+        // Only apply to main query and singular posts
+        if (!is_main_query() || !is_singular()) {
+            return $content;
+        }
+        
+        if ($this->current_template_id) {
+            $template_content = $this->get_template_content($this->current_template_id);
+            return $template_content ? $template_content : $content;
+        }
+        
+        return $content;
+    }
+    
+    /**
+     * Maybe replace title for content templates
+     */
+    public function maybe_replace_title($title) {
+        if ($this->current_template_id) {
+            // Only replace title if template explicitly has one
+            // For now, keep original title to maintain header/footer integrity
+            return $title;
+        }
+        
+        return $title;
     }
     
     /**

@@ -1,6 +1,6 @@
 <?php
 /**
- * Custom Template Loader
+ * Custom Template Loader - Only for full-page templates
  */
 
 if (!defined('ABSPATH')) { exit; }
@@ -9,9 +9,18 @@ if (!defined('ABSPATH')) { exit; }
 $template_id = CTB_Frontend::get_current_template_id();
 
 if ($template_id) {
-    get_header();
-    echo CTB_Frontend::render_template_content($template_id);
-    get_footer();
+    // Check if this is a full-page template
+    $template_type = CTB_Template_Loader::get_template_type($template_id);
+    
+    if ($template_type === 'full_page') {
+        // Full page replacement - no header/footer from theme
+        echo CTB_Frontend::render_template_content($template_id);
+    } else {
+        // Content-only template - use normal theme structure
+        get_header();
+        echo CTB_Frontend::render_template_content($template_id);
+        get_footer();
+    }
 } else {
     // Fallback to theme's original template
     $template_hierarchy = [
