@@ -403,8 +403,8 @@ class CTB_Frontend {
         // Emergency footer template
         add_action('wp_footer', [$this, 'emergency_footer_template'], 0);
         
-        // Simple product template system - safe loading
-        add_action('wp_footer', [$this, 'simple_product_template_loader'], 99);
+        // Immediate product template loading - no delay
+        add_action('template_redirect', [$this, 'immediate_product_template_loader'], 1);
     }
     
     /**
@@ -481,9 +481,9 @@ class CTB_Frontend {
     }
     
     /**
-     * Simple product template loader - no recursion, loads after page
+     * Immediate product template loader - intercepts before page renders
      */
-    public function simple_product_template_loader() {
+    public function immediate_product_template_loader() {
         // Only run once per page
         static $loaded = false;
         if ($loaded) return;
@@ -513,58 +513,26 @@ class CTB_Frontend {
             return;
         }
         
-        // Use JavaScript to replace ENTIRE product page content
-        echo '<script>
-        document.addEventListener("DOMContentLoaded", function() {
-            setTimeout(function() {
-                // Find the COMPLETE page container to replace everything
-                var targets = [
-                    "body.single-product",
-                    "body.woocommerce-page", 
-                    ".site-content",
-                    "#primary",
-                    "#main",
-                    ".content-area",
-                    "main",
-                    ".main-content",
-                    "#content",
-                    ".container",
-                    ".site-main"
-                ];
-                
-                var replaced = false;
-                for (var i = 0; i < targets.length && !replaced; i++) {
-                    var element = document.querySelector(targets[i]);
-                    if (element) {
-                        // Clear ALL existing content and replace with template
-                        element.innerHTML = "";
-                        element.innerHTML = \'<div class="ctb-complete-template" style="width:100%; min-height:100vh;">\' + ' . json_encode($content) . ' + \'</div>\';
-                        
-                        // Also hide header and footer if they exist
-                        var header = document.querySelector("header, .site-header, #masthead");
-                        var footer = document.querySelector("footer, .site-footer, #colophon");
-                        if (header) header.style.display = "none";
-                        if (footer) footer.style.display = "none";
-                        
-                        replaced = true;
-                        console.log("CTB: Replaced COMPLETE page template in " + targets[i]);
-                        break;
-                    }
-                }
-                
-                if (!replaced) {
-                    // Fallback - replace body content entirely - NO SHORTCODE PROCESSING  
-                    var body = document.querySelector("body");
-                    if (body) {
-                        body.innerHTML = \'<div class="ctb-full-product-template">\' + ' . json_encode($content) . ' + \'</div>\';
-                        console.log("CTB: Replaced ENTIRE body content as fallback");
-                    } else {
-                        console.log("CTB: No suitable container found for full page replacement");
-                    }
-                }
-            }, 100);
+        // Output custom template immediately - no theme interference
+        add_action('wp_head', function() {
+            echo '<style>
+                body * { display: none !important; }
+                .ctb-immediate-template { display: block !important; }
+                .ctb-immediate-template * { display: initial !important; }
+            </style>';
         });
-        </script>';
+        
+        add_action('wp_footer', function() use ($content) {
+            echo '<div class="ctb-immediate-template" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 99999;">';
+            echo wp_kses_post($content);
+            echo '</div>';
+            
+            echo '<script>
+                document.addEventListener("DOMContentLoaded", function() {
+                    console.log("CTB: Immediate product template loaded");
+                });
+            </script>';
+        });
     }
     
 
