@@ -51,10 +51,10 @@ class CTB_Frontend {
         add_filter('body_class', [$this, 'add_body_classes']);
         add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts']);
         
-        // Template hooks
-        add_action('get_header', [$this, 'replace_header']);
-        add_action('get_footer', [$this, 'replace_footer']);
-        add_filter('template_include', [$this, 'template_include'], 999);
+        // DISABLED TEMPLATE HOOKS - Let pages load normally
+        // add_action('get_header', [$this, 'replace_header']);
+        // add_action('get_footer', [$this, 'replace_footer']);
+        // add_filter('template_include', [$this, 'template_include'], 999);
         
         // Additional header/footer injection hooks
         add_action('wp_body_open', [$this, 'inject_header_template'], 1);
@@ -403,8 +403,7 @@ class CTB_Frontend {
         // Emergency footer template
         add_action('wp_footer', [$this, 'emergency_footer_template'], 0);
         
-        // SAFE product template approach - no content filters
-        add_action('wp_footer', [$this, 'safe_product_template'], 999);
+        // DISABLED ALL PRODUCT TEMPLATES - Let pages load normally first
     }
     
     /**

@@ -100,8 +100,7 @@ class CTB_Template_Loader {
         }
         
         // Skip evaluation if we're already in template loading to prevent recursion
-        // BUT allow product evaluation for debugging
-        if (self::$loading_template && in_array($type, ['woocommerce_product_category', 'woocommerce_product_tag'])) {
+        if (self::$loading_template && in_array($type, ['post_type', 'woocommerce_product_category', 'woocommerce_product_tag'])) {
             return false;
         }
         
