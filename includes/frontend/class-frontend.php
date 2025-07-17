@@ -513,32 +513,44 @@ class CTB_Frontend {
             return;
         }
         
-        // Use JavaScript to replace content after page loads - no PHP recursion possible
+        // Use JavaScript to replace ENTIRE product page content
         echo '<script>
         document.addEventListener("DOMContentLoaded", function() {
             setTimeout(function() {
-                // Find the main product content area
+                // Find the ENTIRE product area to replace everything
                 var targets = [
-                    ".single-product .summary",
-                    ".single-product .product-summary", 
-                    ".woocommerce-product-details__short-description",
-                    ".entry-content",
-                    ".product .summary",
-                    ".single-product-summary"
+                    ".woocommerce-page",
+                    ".single-product",
+                    ".single.single-product",
+                    ".woocommerce.single-product",
+                    "main.site-main",
+                    ".content-area",
+                    "#main",
+                    ".main-content",
+                    "#content"
                 ];
                 
                 var replaced = false;
                 for (var i = 0; i < targets.length && !replaced; i++) {
                     var element = document.querySelector(targets[i]);
                     if (element) {
-                        element.innerHTML = ' . json_encode(do_shortcode($content)) . ';
+                        // Replace the ENTIRE content of the page container
+                        element.innerHTML = \'<div class="ctb-full-product-template">\' + ' . json_encode(do_shortcode($content)) . ' + \'</div>\';
                         replaced = true;
-                        console.log("CTB: Replaced content in " + targets[i]);
+                        console.log("CTB: Replaced ENTIRE product page in " + targets[i]);
+                        break;
                     }
                 }
                 
                 if (!replaced) {
-                    console.log("CTB: No suitable content area found for template replacement");
+                    // Fallback - replace body content entirely
+                    var body = document.querySelector("body");
+                    if (body) {
+                        body.innerHTML = \'<div class="ctb-full-product-template">\' + ' . json_encode(do_shortcode($content)) . ' + \'</div>\';
+                        console.log("CTB: Replaced ENTIRE body content as fallback");
+                    } else {
+                        console.log("CTB: No suitable container found for full page replacement");
+                    }
                 }
             }, 100);
         });
