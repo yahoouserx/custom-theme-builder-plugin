@@ -403,13 +403,11 @@ class CTB_Frontend {
         // Emergency footer template
         add_action('wp_footer', [$this, 'emergency_footer_template'], 0);
         
-        // Emergency product template - force it to work on all pages initially
-        add_filter('the_content', [$this, 'emergency_product_template'], 999);
-        
-        // Also try WooCommerce specific hooks
-        if (class_exists('WooCommerce')) {
-            add_action('woocommerce_single_product_summary', [$this, 'force_product_template'], 5);
-            add_filter('woocommerce_single_product_content', [$this, 'emergency_product_template'], 999);
+        // Emergency product template - ONLY on product pages to avoid infinite loading
+        if ((function_exists('is_product') && is_product()) || 
+            (is_singular('product')) || 
+            (get_post_type() === 'product')) {
+            add_filter('the_content', [$this, 'emergency_product_template'], 999);
         }
     }
     
@@ -487,9 +485,15 @@ class CTB_Frontend {
     }
     
     /**
-     * Emergency product template
+     * Emergency product template - PREVENT INFINITE LOADING
      */
     public function emergency_product_template($content) {
+        // PREVENT INFINITE LOADING - Check if we're already processing
+        static $processing = false;
+        if ($processing) {
+            return $content;
+        }
+        
         // Enhanced product page detection
         $is_product_page = false;
         
@@ -502,15 +506,15 @@ class CTB_Frontend {
             $is_product_page = true;
         }
         
-        if (function_exists('error_log')) {
-            error_log('CTB Debug: Emergency product template called');
-            error_log('CTB Debug: is_product_page: ' . ($is_product_page ? 'true' : 'false'));
-            error_log('CTB Debug: get_post_type(): ' . get_post_type());
-            error_log('CTB Debug: is_singular(product): ' . (is_singular('product') ? 'true' : 'false'));
-        }
-        
         if (!$is_product_page) {
             return $content;
+        }
+        
+        // SET PROCESSING FLAG TO PREVENT RECURSION
+        $processing = true;
+        
+        if (function_exists('error_log')) {
+            error_log('CTB Debug: Emergency product template called - SAFE MODE');
         }
         
         // Get ALL templates, then filter by title
@@ -529,57 +533,32 @@ class CTB_Frontend {
             }
         }
         
-        if (function_exists('error_log')) {
-            error_log('CTB Debug: Found ' . count($all_templates) . ' total templates');
-            error_log('CTB Debug: Found ' . count($product_templates) . ' product templates');
-            foreach ($product_templates as $template) {
-                error_log('CTB Debug: Product template: ID=' . $template->ID . ', Title=' . $template->post_title);
-            }
-        }
-        
         if (!empty($product_templates)) {
             $template = $product_templates[0];
-            $template_content = $this->get_template_content($template->ID);
+            
+            // Get content WITHOUT calling get_template_content to avoid recursion
+            if (class_exists('\Elementor\Plugin')) {
+                $template_content = \Elementor\Plugin::instance()->frontend->get_builder_content($template->ID, true);
+            } else {
+                // Get raw content without applying filters
+                $template_content = get_post_field('post_content', $template->ID);
+            }
             
             if ($template_content) {
                 if (function_exists('error_log')) {
-                    error_log('CTB Debug: Rendering product template ID: ' . $template->ID);
+                    error_log('CTB Debug: Rendering product template ID: ' . $template->ID . ' - SAFE MODE');
                 }
+                // RESET PROCESSING FLAG
+                $processing = false;
                 return '<div class="emergency-product-template">' . $template_content . '</div>';
             }
         }
         
+        // RESET PROCESSING FLAG
+        $processing = false;
         return $content;
     }
     
-    /**
-     * Force product template via WooCommerce hooks
-     */
-    public function force_product_template() {
-        if (function_exists('error_log')) {
-            error_log('CTB Debug: force_product_template called via WooCommerce hook');
-        }
-        
-        // Get ALL templates with "product" in title
-        $all_templates = get_posts([
-            'post_type' => 'ctb_template',
-            'post_status' => 'publish',
-            'posts_per_page' => -1
-        ]);
-        
-        foreach ($all_templates as $template) {
-            if (stripos($template->post_title, 'product') !== false) {
-                if (function_exists('error_log')) {
-                    error_log('CTB Debug: Forcing product template via WooCommerce hook: ' . $template->post_title);
-                }
-                
-                $template_content = $this->get_template_content($template->ID);
-                if ($template_content) {
-                    echo '<div class="forced-product-template">' . $template_content . '</div>';
-                }
-                break;
-            }
-        }
-    }
+
 
 }
