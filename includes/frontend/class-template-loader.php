@@ -89,10 +89,15 @@ class CTB_Template_Loader {
      */
     private function evaluate_condition($condition) {
         $type = $condition['type'];
-        $operator = $condition['operator'];
-        $value = $condition['value'];
+        $operator = $condition['operator'] ?? 'include';
+        $value = $condition['value'] ?? '';
         
         $matches = false;
+        
+        // Debug logging
+        if (function_exists('error_log')) {
+            error_log('CTB Debug: Evaluating condition - type: ' . $type . ', operator: ' . $operator . ', value: ' . $value);
+        }
         
         // Skip evaluation if we're already in template loading to prevent recursion
         if (self::$loading_template && in_array($type, ['post_type', 'woocommerce_product_category', 'woocommerce_product_tag'])) {
@@ -126,7 +131,11 @@ class CTB_Template_Loader {
                 
                 // Debug logging for WooCommerce products
                 if ($value === 'product' && function_exists('error_log')) {
-                    error_log('CTB Debug: Evaluating product condition, matches: ' . ($matches ? 'true' : 'false'));
+                    error_log('CTB Debug: Evaluating product condition, value: ' . $value);
+                    error_log('CTB Debug: is_product() exists: ' . (function_exists('is_product') ? 'yes' : 'no'));
+                    error_log('CTB Debug: is_product() result: ' . (function_exists('is_product') && is_product() ? 'true' : 'false'));
+                    error_log('CTB Debug: is_singular("product"): ' . (is_singular('product') ? 'true' : 'false'));
+                    error_log('CTB Debug: Final matches result: ' . ($matches ? 'true' : 'false'));
                 }
                 break;
                 
@@ -374,11 +383,17 @@ class CTB_Template_Loader {
         }
         
         // Apply operator
+        $final_result = $matches;
         if ($operator === 'exclude') {
-            $matches = !$matches;
+            $final_result = !$matches;
         }
         
-        return $matches;
+        // Debug logging
+        if (function_exists('error_log')) {
+            error_log('CTB Debug: Condition evaluation - raw match: ' . ($matches ? 'true' : 'false') . ', operator: ' . $operator . ', final result: ' . ($final_result ? 'true' : 'false'));
+        }
+        
+        return $final_result;
     }
     
     /**
@@ -636,6 +651,13 @@ class CTB_Template_Loader {
             foreach ($templates as $template) {
                 $conditions = CTB_Conditions::get_template_conditions($template->ID);
                 error_log('CTB Debug: Template ID ' . $template->ID . ' has ' . count($conditions) . ' conditions');
+                
+                // Log each condition in detail
+                foreach ($conditions as $i => $condition) {
+                    error_log('CTB Debug: Template ' . $template->ID . ' condition ' . $i . ': ' . json_encode($condition));
+                    $match_result = $instance->evaluate_condition($condition);
+                    error_log('CTB Debug: Condition evaluation result: ' . ($match_result ? 'MATCH' : 'NO MATCH'));
+                }
             }
         }
         
