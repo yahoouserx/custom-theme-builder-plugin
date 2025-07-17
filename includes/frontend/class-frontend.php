@@ -403,11 +403,8 @@ class CTB_Frontend {
         // Emergency footer template
         add_action('wp_footer', [$this, 'emergency_footer_template'], 0);
         
-        // Emergency product template - ONLY on SINGLE product pages, NOT shop or archives
-        if ((function_exists('is_product') && is_product() && !is_shop() && !is_product_category()) || 
-            (is_singular('product') && !is_archive() && !is_shop())) {
-            add_filter('the_content', [$this, 'emergency_product_template'], 999);
-        }
+        // SAFE product template approach - no content filters
+        add_action('wp_footer', [$this, 'safe_product_template'], 999);
     }
     
     /**
@@ -484,49 +481,20 @@ class CTB_Frontend {
     }
     
     /**
-     * Emergency product template - COMPLETELY PREVENT RECURSION
+     * SAFE Simple product template - No recursion, no filters
      */
-    public function emergency_product_template($content) {
-        // GLOBAL RECURSION PREVENTION
-        static $already_ran = false;
-        if ($already_ran) {
-            return $content;
+    public function safe_product_template() {
+        // Only run once per page load
+        static $has_run = false;
+        if ($has_run) return;
+        $has_run = true;
+        
+        // Only on individual product pages
+        if (!is_singular('product') || is_shop() || is_archive()) {
+            return;
         }
         
-        // STRICT PRODUCT PAGE DETECTION - EXCLUDE SHOP AND ARCHIVE PAGES
-        $is_single_product_page = false;
-        
-        // Only single product pages, NOT shop archives or category pages
-        if (function_exists('is_product') && is_product() && !is_shop() && !is_product_category() && !is_product_tag()) {
-            $is_single_product_page = true;
-        } elseif (is_singular('product') && !is_shop() && !is_archive()) {
-            $is_single_product_page = true;
-        }
-        
-        // Exit if not a single product page
-        if (!$is_single_product_page) {
-            return $content;
-        }
-        
-        // Additional safety check - if this is shop or archive, do NOT proceed
-        if (function_exists('is_shop') && is_shop()) {
-            return $content;
-        }
-        if (is_archive() || is_home() || is_front_page()) {
-            return $content;
-        }
-        
-        // SET FLAG IMMEDIATELY TO PREVENT ANY RECURSION
-        $already_ran = true;
-        
-        if (function_exists('error_log')) {
-            error_log('CTB Debug: Emergency SINGLE product template called - SAFE MODE');
-            error_log('CTB Debug: is_shop(): ' . (function_exists('is_shop') && is_shop() ? 'true' : 'false'));
-            error_log('CTB Debug: is_archive(): ' . (is_archive() ? 'true' : 'false'));
-            error_log('CTB Debug: is_singular(product): ' . (is_singular('product') ? 'true' : 'false'));
-        }
-        
-        // Get template with "product" in title - SIMPLE APPROACH
+        // Get template with "product" in title
         $templates = get_posts([
             'post_type' => 'ctb_template',
             'post_status' => 'publish',
@@ -536,27 +504,20 @@ class CTB_Frontend {
         
         if (!empty($templates)) {
             $template = $templates[0];
+            $content = get_post_field('post_content', $template->ID);
             
-            if (function_exists('error_log')) {
-                error_log('CTB Debug: Found product template: ' . $template->post_title);
-            }
-            
-            // SIMPLE RAW CONTENT - NO FILTERS
-            $template_content = get_post_field('post_content', $template->ID);
-            
-            if ($template_content) {
-                if (function_exists('error_log')) {
-                    error_log('CTB Debug: Returning product template content - SUCCESS');
-                }
-                return '<div class="emergency-product-template">' . do_shortcode($template_content) . '</div>';
+            if ($content) {
+                // Replace the entire content area directly
+                echo '<script>
+                document.addEventListener("DOMContentLoaded", function() {
+                    var contentArea = document.querySelector(".entry-content, .product-summary, .single-product-summary, .woocommerce-product-details");
+                    if (contentArea) {
+                        contentArea.innerHTML = ' . json_encode(do_shortcode($content)) . ';
+                    }
+                });
+                </script>';
             }
         }
-        
-        if (function_exists('error_log')) {
-            error_log('CTB Debug: No product template found or content empty');
-        }
-        
-        return $content;
     }
     
 
