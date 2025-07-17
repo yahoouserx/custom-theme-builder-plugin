@@ -15,9 +15,8 @@ class CTB_Frontend {
     
     private function __construct() {
         add_filter('template_include', [$this, 'template_include'], 99);
-        add_action('wp_head', [$this, 'inject_header_template'], 1);
-        add_action('wp_footer', [$this, 'inject_footer_template'], 1);
-        add_action('init', [$this, 'emergency_template_system']);
+        add_action('wp_head', [$this, 'force_header_template'], 0);
+        add_action('wp_footer', [$this, 'force_footer_template'], 0);
     }
     
     public function template_include($template) {
@@ -69,8 +68,9 @@ class CTB_Frontend {
     private function template_matches_conditions($template_id) {
         $conditions = get_post_meta($template_id, '_ctb_conditions', true);
         
+        // If no conditions set, template applies everywhere (emergency mode)
         if (empty($conditions)) {
-            return false;
+            return true;
         }
         
         return CTB_Conditions::evaluate_conditions($conditions);
@@ -172,20 +172,12 @@ if (!defined("ABSPATH")) exit;
         return $post ? $post->post_content : '';
     }
     
-    public function emergency_template_system() {
+    public function force_header_template() {
         if (is_admin()) {
             return;
         }
         
-        // Emergency header template
-        add_action('wp_head', [$this, 'emergency_header_template'], 0);
-        
-        // Emergency footer template  
-        add_action('wp_footer', [$this, 'emergency_footer_template'], 0);
-    }
-    
-    public function emergency_header_template() {
-        // Get any template with "header" in the title
+        // Find header templates
         $templates = get_posts([
             'post_type' => 'ctb_template',
             'post_status' => 'publish',
@@ -195,18 +187,29 @@ if (!defined("ABSPATH")) exit;
         
         if (!empty($templates)) {
             echo '<style>
-                .site-header, header.site-header, .main-header, .header, header { display: none !important; }
-                .ctb-emergency-header { position: relative; z-index: 9999; width: 100%; }
+                .site-header, header.site-header, .main-header, .header, header, 
+                .site-branding, .custom-logo-link, .main-navigation, 
+                .primary-navigation, .navbar, .top-bar { display: none !important; }
+                .ctb-force-header { 
+                    position: relative; 
+                    z-index: 99999; 
+                    width: 100%; 
+                    display: block !important;
+                }
             </style>';
             
-            echo '<div class="ctb-emergency-header">';
+            echo '<div class="ctb-force-header">';
             echo $this->get_template_content($templates[0]->ID);
             echo '</div>';
         }
     }
     
-    public function emergency_footer_template() {
-        // Get any template with "footer" in the title
+    public function force_footer_template() {
+        if (is_admin()) {
+            return;
+        }
+        
+        // Find footer templates
         $templates = get_posts([
             'post_type' => 'ctb_template',
             'post_status' => 'publish',
@@ -216,21 +219,19 @@ if (!defined("ABSPATH")) exit;
         
         if (!empty($templates)) {
             echo '<style>
-                .site-footer, footer.site-footer, .main-footer, .footer, footer { display: none !important; }
-                .ctb-emergency-footer { position: relative; z-index: 9999; width: 100%; }
+                .site-footer, footer.site-footer, .main-footer, .footer, footer,
+                .colophon, .site-info, .footer-widgets { display: none !important; }
+                .ctb-force-footer { 
+                    position: relative; 
+                    z-index: 99999; 
+                    width: 100%; 
+                    display: block !important;
+                }
             </style>';
             
-            echo '<div class="ctb-emergency-footer">';
+            echo '<div class="ctb-force-footer">';
             echo $this->get_template_content($templates[0]->ID);
             echo '</div>';
         }
-    }
-    
-    public function inject_header_template() {
-        // Legacy method - kept for compatibility
-    }
-    
-    public function inject_footer_template() {
-        // Legacy method - kept for compatibility
     }
 }
