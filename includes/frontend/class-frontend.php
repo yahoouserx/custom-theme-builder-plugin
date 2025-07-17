@@ -485,12 +485,12 @@ class CTB_Frontend {
     }
     
     /**
-     * Emergency product template - PREVENT INFINITE LOADING
+     * Emergency product template - COMPLETELY PREVENT RECURSION
      */
     public function emergency_product_template($content) {
-        // PREVENT INFINITE LOADING - Check if we're already processing
-        static $processing = false;
-        if ($processing) {
+        // GLOBAL RECURSION PREVENTION
+        static $already_ran = false;
+        if ($already_ran) {
             return $content;
         }
         
@@ -510,52 +510,43 @@ class CTB_Frontend {
             return $content;
         }
         
-        // SET PROCESSING FLAG TO PREVENT RECURSION
-        $processing = true;
+        // SET FLAG IMMEDIATELY TO PREVENT ANY RECURSION
+        $already_ran = true;
         
         if (function_exists('error_log')) {
             error_log('CTB Debug: Emergency product template called - SAFE MODE');
         }
         
-        // Get ALL templates, then filter by title
-        $all_templates = get_posts([
+        // Get template with "product" in title - SIMPLE APPROACH
+        $templates = get_posts([
             'post_type' => 'ctb_template',
             'post_status' => 'publish',
-            'posts_per_page' => -1,
-            'orderby' => 'date',
-            'order' => 'DESC'
+            'posts_per_page' => 1,
+            's' => 'product'
         ]);
         
-        $product_templates = [];
-        foreach ($all_templates as $template) {
-            if (stripos($template->post_title, 'product') !== false) {
-                $product_templates[] = $template;
-            }
-        }
-        
-        if (!empty($product_templates)) {
-            $template = $product_templates[0];
+        if (!empty($templates)) {
+            $template = $templates[0];
             
-            // Get content WITHOUT calling get_template_content to avoid recursion
-            if (class_exists('\Elementor\Plugin')) {
-                $template_content = \Elementor\Plugin::instance()->frontend->get_builder_content($template->ID, true);
-            } else {
-                // Get raw content without applying filters
-                $template_content = get_post_field('post_content', $template->ID);
+            if (function_exists('error_log')) {
+                error_log('CTB Debug: Found product template: ' . $template->post_title);
             }
+            
+            // SIMPLE RAW CONTENT - NO FILTERS
+            $template_content = get_post_field('post_content', $template->ID);
             
             if ($template_content) {
                 if (function_exists('error_log')) {
-                    error_log('CTB Debug: Rendering product template ID: ' . $template->ID . ' - SAFE MODE');
+                    error_log('CTB Debug: Returning product template content - SUCCESS');
                 }
-                // RESET PROCESSING FLAG
-                $processing = false;
-                return '<div class="emergency-product-template">' . $template_content . '</div>';
+                return '<div class="emergency-product-template">' . do_shortcode($template_content) . '</div>';
             }
         }
         
-        // RESET PROCESSING FLAG
-        $processing = false;
+        if (function_exists('error_log')) {
+            error_log('CTB Debug: No product template found or content empty');
+        }
+        
         return $content;
     }
     
