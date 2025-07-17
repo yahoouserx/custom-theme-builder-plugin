@@ -512,8 +512,15 @@ class CTB_Frontend {
         $temp_template = get_temp_dir() . 'ctb-product-template.php';
         
         $template_content = '<?php
-        // Custom Theme Builder Product Template
-        get_header(); ?>
+        // Custom Theme Builder Product Template with dynamic data
+        get_header(); 
+        
+        // Get current product data
+        global $post, $product;
+        if (!$product) {
+            $product = wc_get_product($post->ID);
+        }
+        ?>
         
         <style>
         .ctb-custom-product-template {
@@ -523,6 +530,7 @@ class CTB_Frontend {
             padding: 20px;
             background: #fff;
             min-height: 500px;
+            clear: both;
         }
         .ctb-custom-product-template * {
             box-sizing: border-box;
@@ -530,6 +538,7 @@ class CTB_Frontend {
         .ctb-custom-product-template img {
             max-width: 100%;
             height: auto;
+            display: block;
         }
         .ctb-custom-product-template p {
             margin-bottom: 1em;
@@ -541,10 +550,36 @@ class CTB_Frontend {
             margin-top: 1.5em;
             margin-bottom: 0.5em;
         }
+        .ctb-debug-info {
+            background: #f1f1f1;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #0073aa;
+            font-family: monospace;
+            font-size: 12px;
+        }
         </style>
         
         <div class="ctb-custom-product-template">
-            ' . wp_kses_post($content) . '
+            <?php if ($product): ?>
+                <div class="ctb-debug-info">
+                    <strong>Product Data Available:</strong><br>
+                    ID: <?php echo $product->get_id(); ?><br>
+                    Name: <?php echo $product->get_name(); ?><br>
+                    Price: <?php echo $product->get_price_html(); ?><br>
+                    Type: <?php echo $product->get_type(); ?>
+                </div>
+            <?php else: ?>
+                <div class="ctb-debug-info">
+                    <strong>No Product Data Found</strong><br>
+                    Post ID: <?php echo $post->ID ?? "No Post"; ?><br>
+                    Post Type: <?php echo $post->post_type ?? "Unknown"; ?>
+                </div>
+            <?php endif; ?>
+            
+            <div class="ctb-template-content">
+                ' . $content . '
+            </div>
         </div>
         
         <?php get_footer();';
