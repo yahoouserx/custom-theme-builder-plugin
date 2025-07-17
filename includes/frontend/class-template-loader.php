@@ -94,10 +94,7 @@ class CTB_Template_Loader {
         
         $matches = false;
         
-        // Debug logging
-        if (function_exists('error_log')) {
-            error_log('CTB Debug: Evaluating condition - type: ' . $type . ', operator: ' . $operator . ', value: ' . $value);
-        }
+        // DISABLED DEBUG LOGGING - No more spam
         
         // Skip evaluation if we're already in template loading to prevent recursion
         if (self::$loading_template && in_array($type, ['post_type', 'woocommerce_product_category', 'woocommerce_product_tag'])) {
@@ -143,18 +140,7 @@ class CTB_Template_Loader {
                     $matches = is_singular($value) || is_post_type_archive($value);
                 }
                 
-                // Debug logging for WooCommerce products
-                if ($value === 'product' && function_exists('error_log')) {
-                    error_log('CTB Debug: Evaluating product condition, value: ' . $value);
-                    error_log('CTB Debug: is_product() exists: ' . (function_exists('is_product') ? 'yes' : 'no'));
-                    error_log('CTB Debug: is_product() result: ' . (function_exists('is_product') && is_product() ? 'true' : 'false'));
-                    error_log('CTB Debug: is_singular("product"): ' . (is_singular('product') ? 'true' : 'false'));
-                    error_log('CTB Debug: get_post_type(): ' . get_post_type());
-                    error_log('CTB Debug: is_singular(): ' . (is_singular() ? 'true' : 'false'));
-                    error_log('CTB Debug: WooCommerce active: ' . (class_exists('WooCommerce') ? 'yes' : 'no'));
-                    error_log('CTB Debug: Current post ID: ' . get_the_ID());
-                    error_log('CTB Debug: Final matches result: ' . ($matches ? 'true' : 'false'));
-                }
+                // DISABLED DEBUG LOGGING - No more spam
                 break;
                 
             case 'page':

@@ -479,45 +479,8 @@ class CTB_Frontend {
         }
     }
     
-    /**
-     * SAFE Simple product template - No recursion, no filters
-     */
-    public function safe_product_template() {
-        // Only run once per page load
-        static $has_run = false;
-        if ($has_run) return;
-        $has_run = true;
-        
-        // Only on individual product pages
-        if (!is_singular('product') || is_shop() || is_archive()) {
-            return;
-        }
-        
-        // Get template with "product" in title
-        $templates = get_posts([
-            'post_type' => 'ctb_template',
-            'post_status' => 'publish',
-            'posts_per_page' => 1,
-            's' => 'product'
-        ]);
-        
-        if (!empty($templates)) {
-            $template = $templates[0];
-            $content = get_post_field('post_content', $template->ID);
-            
-            if ($content) {
-                // Replace the entire content area directly
-                echo '<script>
-                document.addEventListener("DOMContentLoaded", function() {
-                    var contentArea = document.querySelector(".entry-content, .product-summary, .single-product-summary, .woocommerce-product-details");
-                    if (contentArea) {
-                        contentArea.innerHTML = ' . json_encode(do_shortcode($content)) . ';
-                    }
-                });
-                </script>';
-            }
-        }
-    }
+    // ALL PRODUCT TEMPLATE FUNCTIONS COMPLETELY REMOVED
+    // Pages will load normally without any template interference
     
 
 
