@@ -405,6 +405,11 @@ class CTB_Frontend {
         
         // Direct template override - replaces entire template
         add_filter('template_include', [$this, 'override_product_template'], 99);
+        
+        // Disable WooCommerce template loading to prevent conflicts
+        remove_action('wp_head', 'wc_print_js', 25);
+        remove_action('wp_head', 'woocommerce_output_content_wrapper', 10);
+        add_filter('woocommerce_template_loader_files', '__return_empty_array', 99);
     }
     
     /**
