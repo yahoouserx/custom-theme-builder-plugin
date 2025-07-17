@@ -511,36 +511,75 @@ class CTB_Frontend {
         // Create temporary template file with proper styling
         $temp_template = get_temp_dir() . 'ctb-product-template.php';
         
-        $template_content = '<?php
-        // Simple template with basic styling
-        get_header(); ?>
-        
-        <div style="
-            max-width: 1200px; 
-            margin: 50px auto; 
-            padding: 40px; 
-            background: white; 
+        $template_content = '<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Product Template</title>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 0; 
+            font-family: Arial, sans-serif; 
+            background: #f5f5f5; 
+        }
+        .ctb-container {
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 40px;
+            background: white;
             box-shadow: 0 0 20px rgba(0,0,0,0.1);
             border-radius: 8px;
-            font-family: Arial, sans-serif;
             line-height: 1.6;
             color: #333;
-        ">
-            <div style="border-bottom: 3px solid #0073aa; padding-bottom: 20px; margin-bottom: 30px;">
-                <h1 style="margin: 0; color: #0073aa; font-size: 2.5em;">Custom Product Template</h1>
-                <p style="margin: 10px 0 0 0; color: #666; font-size: 16px;">Template is loading correctly</p>
-            </div>
-            
-            <div style="background: #f9f9f9; padding: 20px; border-left: 4px solid #0073aa; margin: 20px 0;">
-                ' . wpautop($content) . '
-            </div>
-            
-            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #999; font-size: 14px;">
-                Template loaded via Custom Theme Builder Plugin
-            </div>
+        }
+        .ctb-header {
+            border-bottom: 3px solid #0073aa;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .ctb-title {
+            margin: 0;
+            color: #0073aa;
+            font-size: 2.5em;
+        }
+        .ctb-subtitle {
+            margin: 10px 0 0 0;
+            color: #666;
+            font-size: 16px;
+        }
+        .ctb-content {
+            background: #f9f9f9;
+            padding: 20px;
+            border-left: 4px solid #0073aa;
+            margin: 20px 0;
+            white-space: pre-line;
+        }
+        .ctb-footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #999;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="ctb-container">
+        <div class="ctb-header">
+            <h1 class="ctb-title">Custom Product Template</h1>
+            <p class="ctb-subtitle">Template is loading correctly</p>
         </div>
         
-        <?php get_footer();';
+        <div class="ctb-content">' . esc_html($content) . '</div>
+        
+        <div class="ctb-footer">
+            Template loaded via Custom Theme Builder Plugin
+        </div>
+    </div>
+</body>
+</html>';
         
         file_put_contents($temp_template, $template_content);
         
