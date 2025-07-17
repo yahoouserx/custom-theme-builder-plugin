@@ -508,12 +508,40 @@ class CTB_Frontend {
             return $template;
         }
         
-        // Create temporary template file
+        // Create temporary template file with proper styling
         $temp_template = get_temp_dir() . 'ctb-product-template.php';
         
         $template_content = '<?php
         // Custom Theme Builder Product Template
         get_header(); ?>
+        
+        <style>
+        .ctb-custom-product-template {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #fff;
+            min-height: 500px;
+        }
+        .ctb-custom-product-template * {
+            box-sizing: border-box;
+        }
+        .ctb-custom-product-template img {
+            max-width: 100%;
+            height: auto;
+        }
+        .ctb-custom-product-template p {
+            margin-bottom: 1em;
+            line-height: 1.6;
+        }
+        .ctb-custom-product-template h1,
+        .ctb-custom-product-template h2,
+        .ctb-custom-product-template h3 {
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        </style>
         
         <div class="ctb-custom-product-template">
             ' . wp_kses_post($content) . '
