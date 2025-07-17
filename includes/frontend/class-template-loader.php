@@ -110,8 +110,10 @@ class CTB_Template_Loader {
                 
             case 'post_type':
                 // Special handling for WooCommerce products to avoid infinite loading
-                if ($value === 'product' && function_exists('is_product') && is_product()) {
-                    $matches = true;
+                if ($value === 'product' && function_exists('is_product')) {
+                    $matches = is_product();
+                } elseif ($value === 'product' && function_exists('is_woocommerce') && is_woocommerce()) {
+                    $matches = is_product();
                 } else {
                     $matches = is_singular($value) || is_post_type_archive($value);
                 }
@@ -519,9 +521,50 @@ class CTB_Template_Loader {
      * Get template for location
      */
     public static function get_template_for_location($location) {
-        $templates = self::get_active_templates();
+        // Get all active templates
+        $templates = get_posts([
+            'post_type' => 'ctb_template',
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'meta_query' => [
+                [
+                    'key' => '_ctb_template_status',
+                    'value' => 'active',
+                    'compare' => '='
+                ]
+            ],
+            'orderby' => 'menu_order',
+            'order' => 'ASC'
+        ]);
         
-        return isset($templates[$location]) ? $templates[$location] : false;
+        $instance = self::instance();
+        
+        // Check each template's conditions and type
+        foreach ($templates as $template) {
+            $conditions = CTB_Conditions::get_template_conditions($template->ID);
+            
+            if (!empty($conditions)) {
+                // Check if this template is for the requested location
+                $template_type = self::get_template_type($template->ID);
+                
+                if ($template_type === $location) {
+                    // Check if ANY condition matches for this location
+                    $any_match = false;
+                    foreach ($conditions as $condition) {
+                        if ($instance->evaluate_condition($condition)) {
+                            $any_match = true;
+                            break;
+                        }
+                    }
+                    
+                    if ($any_match) {
+                        return $template->ID;
+                    }
+                }
+            }
+        }
+        
+        return false;
     }
     
     /**
@@ -575,6 +618,11 @@ class CTB_Template_Loader {
             }
         }
         
+        // Debug: Log template matching for WooCommerce products
+        if (function_exists('is_product') && is_product() && function_exists('error_log')) {
+            error_log('CTB Debug: WooCommerce product page detected, template result: ' . ($result ?: 'none'));
+        }
+        
         self::$loading_template = false;
         return $result;
     }
@@ -596,6 +644,19 @@ class CTB_Template_Loader {
         
         if (empty($conditions)) {
             return 'content';
+        }
+        
+        // Check template meta or post title for type hints
+        $post_title = get_the_title($template_id);
+        $template_name = strtolower($post_title);
+        
+        // Check for specific template types based on title or conditions
+        if (strpos($template_name, 'header') !== false) {
+            return 'header';
+        }
+        
+        if (strpos($template_name, 'footer') !== false) {
+            return 'footer';
         }
         
         // Check for header/footer specific conditions

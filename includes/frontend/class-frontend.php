@@ -56,6 +56,10 @@ class CTB_Frontend {
         add_action('get_footer', [$this, 'replace_footer']);
         add_filter('template_include', [$this, 'template_include'], 999);
         
+        // Additional header/footer injection hooks
+        add_action('wp_head', [$this, 'inject_header_template'], 0);
+        add_action('wp_footer', [$this, 'inject_footer_template'], 0);
+        
         // Preview functionality
 
     }
@@ -324,5 +328,42 @@ class CTB_Frontend {
         }
     }
     
+    /**
+     * Inject header template content
+     */
+    public function inject_header_template() {
+        $header_template = CTB_Template_Loader::get_template_for_location('header');
+        
+        if ($header_template) {
+            echo '<div id="ctb-header-template">';
+            $this->render_template($header_template);
+            echo '</div>';
+            
+            // Add CSS to hide default headers
+            echo '<style>
+                .site-header, header.site-header, .main-header, .header, header { display: none !important; }
+                body.ctb-custom-header .site-header { display: none !important; }
+            </style>';
+        }
+    }
+    
+    /**
+     * Inject footer template content
+     */
+    public function inject_footer_template() {
+        $footer_template = CTB_Template_Loader::get_template_for_location('footer');
+        
+        if ($footer_template) {
+            echo '<div id="ctb-footer-template">';
+            $this->render_template($footer_template);
+            echo '</div>';
+            
+            // Add CSS to hide default footers
+            echo '<style>
+                .site-footer, footer.site-footer, .main-footer, .footer, footer { display: none !important; }
+                body.ctb-custom-footer .site-footer { display: none !important; }
+            </style>';
+        }
+    }
 
 }
