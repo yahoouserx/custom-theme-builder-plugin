@@ -96,6 +96,10 @@ class CTB_Frontend {
             return false;
         }
         
+        // Get header and footer templates
+        $header_content = $this->get_header_template_content();
+        $footer_content = $this->get_footer_template_content();
+        
         $temp_template = get_temp_dir() . 'ctb-template-' . $template_id . '.php';
         
         $template_content = '<!DOCTYPE html>
@@ -105,17 +109,46 @@ class CTB_Frontend {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php wp_title(); ?></title>
     <?php wp_head(); ?>
+    <style>
+        .site-header, header.site-header, .main-header, .header, header { display: none !important; }
+        .site-footer, footer.site-footer, .main-footer, .footer, footer { display: none !important; }
+        .ctb-template-wrapper { width: 100%; }
+    </style>
 </head>
 <body <?php body_class(); ?>>
+    ' . ($header_content ? '<div class="ctb-header-in-product">' . $header_content . '</div>' : '') . '
     <div class="ctb-template-wrapper">
         ' . $content . '
     </div>
+    ' . ($footer_content ? '<div class="ctb-footer-in-product">' . $footer_content . '</div>' : '') . '
     <?php wp_footer(); ?>
 </body>
 </html>';
         
         file_put_contents($temp_template, $template_content);
         return $temp_template;
+    }
+    
+    private function get_header_template_content() {
+        $templates = get_posts([
+            'post_type' => 'ctb_template',
+            'post_status' => 'publish',
+            'posts_per_page' => 1,
+            's' => 'header'
+        ]);
+        
+        return !empty($templates) ? $this->get_template_content($templates[0]->ID) : '';
+    }
+    
+    private function get_footer_template_content() {
+        $templates = get_posts([
+            'post_type' => 'ctb_template',
+            'post_status' => 'publish',
+            'posts_per_page' => 1,
+            's' => 'footer'
+        ]);
+        
+        return !empty($templates) ? $this->get_template_content($templates[0]->ID) : '';
     }
     
     private function get_template_content($template_id) {
