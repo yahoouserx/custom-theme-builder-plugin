@@ -403,8 +403,8 @@ class CTB_Frontend {
         // Emergency footer template
         add_action('wp_footer', [$this, 'emergency_footer_template'], 0);
         
-        // Immediate product template loading - no delay
-        add_action('template_redirect', [$this, 'immediate_product_template_loader'], 1);
+        // Direct template override - replaces entire template
+        add_filter('template_include', [$this, 'override_product_template'], 99);
     }
     
     /**
@@ -481,17 +481,12 @@ class CTB_Frontend {
     }
     
     /**
-     * Immediate product template loader - intercepts before page renders
+     * Override product template completely
      */
-    public function immediate_product_template_loader() {
-        // Only run once per page
-        static $loaded = false;
-        if ($loaded) return;
-        $loaded = true;
-        
-        // Only on single product pages, not shop or archives
-        if (!is_singular('product') || is_shop() || is_archive()) {
-            return;
+    public function override_product_template($template) {
+        // Only on single product pages
+        if (!is_singular('product')) {
+            return $template;
         }
         
         // Find templates with "product" in title
@@ -503,36 +498,32 @@ class CTB_Frontend {
         ]);
         
         if (empty($templates)) {
-            return;
+            return $template;
         }
         
-        $template = $templates[0];
-        $content = get_post_field('post_content', $template->ID);
+        $template_post = $templates[0];
+        $content = get_post_field('post_content', $template_post->ID);
         
         if (empty($content)) {
-            return;
+            return $template;
         }
         
-        // Output custom template immediately - no theme interference
-        add_action('wp_head', function() {
-            echo '<style>
-                body * { display: none !important; }
-                .ctb-immediate-template { display: block !important; }
-                .ctb-immediate-template * { display: initial !important; }
-            </style>';
-        });
+        // Create temporary template file
+        $temp_template = get_temp_dir() . 'ctb-product-template.php';
         
-        add_action('wp_footer', function() use ($content) {
-            echo '<div class="ctb-immediate-template" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 99999;">';
-            echo wp_kses_post($content);
-            echo '</div>';
-            
-            echo '<script>
-                document.addEventListener("DOMContentLoaded", function() {
-                    console.log("CTB: Immediate product template loaded");
-                });
-            </script>';
-        });
+        $template_content = '<?php
+        // Custom Theme Builder Product Template
+        get_header(); ?>
+        
+        <div class="ctb-custom-product-template">
+            ' . wp_kses_post($content) . '
+        </div>
+        
+        <?php get_footer();';
+        
+        file_put_contents($temp_template, $template_content);
+        
+        return $temp_template;
     }
     
 
