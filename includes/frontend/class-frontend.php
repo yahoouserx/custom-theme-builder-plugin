@@ -538,57 +538,123 @@ class CTB_Frontend {
         margin: 0 auto;
         padding: 40px 20px;
         background: #fff;
+        position: relative;
+        z-index: 1;
     }
+    
+    /* Reset all inherited styles */
+    .ctb-template-wrapper,
     .ctb-template-wrapper * {
-        box-sizing: border-box;
+        box-sizing: border-box !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        outline: none !important;
+        background: transparent !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+        text-decoration: none !important;
+        list-style: none !important;
     }
-    .ctb-template-wrapper img {
-        max-width: 100%;
-        height: auto;
-        display: block;
-        margin: 20px 0;
+    
+    /* Re-apply wanted styles */
+    .ctb-template-wrapper {
+        padding: 40px 20px !important;
+        background: #fff !important;
     }
+    
     .ctb-template-wrapper p {
-        margin-bottom: 1.2em;
-        line-height: 1.7;
-        font-size: 16px;
-        color: #333;
+        margin-bottom: 1.2em !important;
+        line-height: 1.7 !important;
+        font-size: 16px !important;
+        color: #333 !important;
+        display: block !important;
     }
+    
     .ctb-template-wrapper h1,
     .ctb-template-wrapper h2,
-    .ctb-template-wrapper h3 {
-        margin-top: 2em;
-        margin-bottom: 0.8em;
-        color: #222;
-        font-weight: 600;
+    .ctb-template-wrapper h3,
+    .ctb-template-wrapper h4,
+    .ctb-template-wrapper h5,
+    .ctb-template-wrapper h6 {
+        margin-top: 1.5em !important;
+        margin-bottom: 0.8em !important;
+        color: #222 !important;
+        font-weight: 600 !important;
+        display: block !important;
     }
-    .ctb-template-wrapper h1 { font-size: 2.5em; }
-    .ctb-template-wrapper h2 { font-size: 2em; }
-    .ctb-template-wrapper h3 { font-size: 1.5em; }
+    
+    .ctb-template-wrapper h1 { 
+        font-size: 2.5em !important; 
+        line-height: 1.2 !important;
+    }
+    .ctb-template-wrapper h2 { 
+        font-size: 2em !important; 
+        line-height: 1.3 !important;
+    }
+    .ctb-template-wrapper h3 { 
+        font-size: 1.5em !important; 
+        line-height: 1.4 !important;
+    }
+    
+    .ctb-template-wrapper img {
+        max-width: 100% !important;
+        height: auto !important;
+        display: block !important;
+        margin: 20px 0 !important;
+    }
+    
+    .ctb-template-wrapper div,
+    .ctb-template-wrapper section,
+    .ctb-template-wrapper article {
+        display: block !important;
+        margin-bottom: 1em !important;
+    }
+    
+    .ctb-template-wrapper a {
+        color: #0073aa !important;
+        text-decoration: underline !important;
+    }
+    
+    .ctb-template-wrapper ul,
+    .ctb-template-wrapper ol {
+        margin: 1em 0 !important;
+        padding-left: 2em !important;
+        list-style: disc !important;
+    }
+    
+    .ctb-template-wrapper li {
+        margin-bottom: 0.5em !important;
+        list-style: inherit !important;
+    }
     
     /* Block editor styles */
     .ctb-template-wrapper .wp-block-group {
-        margin: 2em 0;
+        margin: 2em 0 !important;
+        display: block !important;
     }
+    
     .ctb-template-wrapper .wp-block-columns {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 20px;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 20px !important;
+        margin: 2em 0 !important;
     }
+    
     .ctb-template-wrapper .wp-block-column {
-        flex: 1;
-        min-width: 250px;
+        flex: 1 !important;
+        min-width: 250px !important;
+        display: block !important;
     }
     
     /* Responsive */
     @media (max-width: 768px) {
         .ctb-template-wrapper {
-            padding: 20px 15px;
+            padding: 20px 15px !important;
         }
-        .ctb-template-wrapper h1 { font-size: 2em; }
-        .ctb-template-wrapper h2 { font-size: 1.5em; }
+        .ctb-template-wrapper h1 { font-size: 2em !important; }
+        .ctb-template-wrapper h2 { font-size: 1.5em !important; }
         .ctb-template-wrapper .wp-block-columns {
-            flex-direction: column;
+            flex-direction: column !important;
         }
     }
     </style>
