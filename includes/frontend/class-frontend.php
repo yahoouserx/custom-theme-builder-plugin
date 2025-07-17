@@ -534,8 +534,8 @@ class CTB_Frontend {
                 for (var i = 0; i < targets.length && !replaced; i++) {
                     var element = document.querySelector(targets[i]);
                     if (element) {
-                        // Replace the ENTIRE content of the page container
-                        element.innerHTML = \'<div class="ctb-full-product-template">\' + ' . json_encode(do_shortcode($content)) . ' + \'</div>\';
+                        // Replace the ENTIRE content of the page container - NO SHORTCODE PROCESSING
+                        element.innerHTML = \'<div class="ctb-full-product-template">\' + ' . json_encode($content) . ' + \'</div>\';
                         replaced = true;
                         console.log("CTB: Replaced ENTIRE product page in " + targets[i]);
                         break;
@@ -543,10 +543,10 @@ class CTB_Frontend {
                 }
                 
                 if (!replaced) {
-                    // Fallback - replace body content entirely
+                    // Fallback - replace body content entirely - NO SHORTCODE PROCESSING  
                     var body = document.querySelector("body");
                     if (body) {
-                        body.innerHTML = \'<div class="ctb-full-product-template">\' + ' . json_encode(do_shortcode($content)) . ' + \'</div>\';
+                        body.innerHTML = \'<div class="ctb-full-product-template">\' + ' . json_encode($content) . ' + \'</div>\';
                         console.log("CTB: Replaced ENTIRE body content as fallback");
                     } else {
                         console.log("CTB: No suitable container found for full page replacement");
