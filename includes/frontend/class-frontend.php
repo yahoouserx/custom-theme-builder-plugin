@@ -60,6 +60,9 @@ class CTB_Frontend {
         add_action('wp_body_open', [$this, 'inject_header_template'], 1);
         add_action('wp_footer', [$this, 'inject_footer_template'], 1);
         
+        // Emergency fallback system
+        add_action('template_redirect', [$this, 'emergency_template_system']);
+        
         // Preview functionality
 
     }
@@ -384,6 +387,128 @@ class CTB_Frontend {
                 echo '<div class="ctb-woo-template-content">' . $template_content . '</div>';
             }
         }
+    }
+
+    /**
+     * Emergency template system - Force templates to work
+     */
+    public function emergency_template_system() {
+        if (is_admin()) {
+            return;
+        }
+        
+        // Emergency header template
+        add_action('wp_head', [$this, 'emergency_header_template'], 0);
+        
+        // Emergency footer template
+        add_action('wp_footer', [$this, 'emergency_footer_template'], 0);
+        
+        // Emergency product template
+        if (function_exists('is_product') && is_product()) {
+            add_filter('the_content', [$this, 'emergency_product_template'], 999);
+        }
+    }
+    
+    /**
+     * Emergency header template
+     */
+    public function emergency_header_template() {
+        // Get any template with "header" in the title
+        $templates = get_posts([
+            'post_type' => 'ctb_template',
+            'post_status' => 'publish',
+            'posts_per_page' => 1,
+            'meta_query' => [
+                'relation' => 'OR',
+                [
+                    'key' => 'post_title',
+                    'value' => 'header',
+                    'compare' => 'LIKE'
+                ]
+            ]
+        ]);
+        
+        // If no templates found, try by title search
+        if (empty($templates)) {
+            $templates = get_posts([
+                'post_type' => 'ctb_template',
+                'post_status' => 'publish',
+                'posts_per_page' => 1,
+                's' => 'header'
+            ]);
+        }
+        
+        if (!empty($templates)) {
+            $template = $templates[0];
+            
+            // Add CSS to hide default headers and position custom header
+            echo '<style>
+                .site-header, header.site-header, .main-header, .header, header, .masthead, .site-branding { display: none !important; }
+                #emergency-header { position: relative; top: 0; left: 0; right: 0; z-index: 9999; background: white; }
+                body { margin-top: 0; }
+            </style>';
+            
+            // Render custom header
+            echo '<div id="emergency-header">';
+            $this->render_template($template->ID);
+            echo '</div>';
+        }
+    }
+    
+    /**
+     * Emergency footer template
+     */
+    public function emergency_footer_template() {
+        // Get any template with "footer" in the title
+        $templates = get_posts([
+            'post_type' => 'ctb_template',
+            'post_status' => 'publish',
+            'posts_per_page' => 1,
+            's' => 'footer'
+        ]);
+        
+        if (!empty($templates)) {
+            $template = $templates[0];
+            
+            // Add CSS to hide default footers
+            echo '<style>
+                .site-footer, footer.site-footer, .main-footer, .footer, footer { display: none !important; }
+            </style>';
+            
+            // Render custom footer
+            echo '<div id="emergency-footer">';
+            $this->render_template($template->ID);
+            echo '</div>';
+        }
+    }
+    
+    /**
+     * Emergency product template
+     */
+    public function emergency_product_template($content) {
+        // Only on single product pages
+        if (!is_singular('product')) {
+            return $content;
+        }
+        
+        // Get templates with "product" in the title
+        $templates = get_posts([
+            'post_type' => 'ctb_template',
+            'post_status' => 'publish',
+            'posts_per_page' => 1,
+            's' => 'product'
+        ]);
+        
+        if (!empty($templates)) {
+            $template = $templates[0];
+            $template_content = $this->get_template_content($template->ID);
+            
+            if ($template_content) {
+                return '<div class="emergency-product-template">' . $template_content . '</div>';
+            }
+        }
+        
+        return $content;
     }
 
 }
