@@ -33,7 +33,10 @@ class CTB_Frontend {
             
             // For single product pages, replace entire template
             if (is_singular('product') && $template_type === 'single_product') {
-                return $this->create_full_page_template($matching_template);
+                $full_template = $this->create_full_page_template($matching_template);
+                if ($full_template) {
+                    return $full_template;
+                }
             }
             
             // For other templates, use content replacement
@@ -102,7 +105,9 @@ class CTB_Frontend {
         
         $temp_template = get_temp_dir() . 'ctb-template-' . $template_id . '.php';
         
-        $template_content = '<!DOCTYPE html>
+        $template_content = '<?php
+if (!defined("ABSPATH")) exit;
+?><!DOCTYPE html>
 <html <?php language_attributes(); ?>>
 <head>
     <meta charset="<?php bloginfo("charset"); ?>">
@@ -116,11 +121,22 @@ class CTB_Frontend {
     </style>
 </head>
 <body <?php body_class(); ?>>
-    ' . ($header_content ? '<div class="ctb-header-in-product">' . $header_content . '</div>' : '') . '
-    <div class="ctb-template-wrapper">
-        ' . $content . '
+    <?php if (!empty("' . addslashes($header_content) . '")) : ?>
+    <div class="ctb-header-in-product">
+        <?php echo wp_kses_post("' . addslashes($header_content) . '"); ?>
     </div>
-    ' . ($footer_content ? '<div class="ctb-footer-in-product">' . $footer_content . '</div>' : '') . '
+    <?php endif; ?>
+    
+    <div class="ctb-template-wrapper">
+        <?php echo wp_kses_post("' . addslashes($content) . '"); ?>
+    </div>
+    
+    <?php if (!empty("' . addslashes($footer_content) . '")) : ?>
+    <div class="ctb-footer-in-product">
+        <?php echo wp_kses_post("' . addslashes($footer_content) . '"); ?>
+    </div>
+    <?php endif; ?>
+    
     <?php wp_footer(); ?>
 </body>
 </html>';
