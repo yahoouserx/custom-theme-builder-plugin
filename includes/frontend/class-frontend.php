@@ -572,7 +572,7 @@ class CTB_Frontend {
             <p class="ctb-subtitle">Template is loading correctly</p>
         </div>
         
-        <div class="ctb-content">' . esc_html($content) . '</div>
+        <div class="ctb-content">' . $content . '</div>
         
         <div class="ctb-footer">
             Template loaded via Custom Theme Builder Plugin
