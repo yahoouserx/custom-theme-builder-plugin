@@ -311,7 +311,7 @@ class CTB_Admin {
             'ctb-admin-style',
             CTB_PLUGIN_URL . 'assets/admin/admin.css',
             [],
-            CTB_VERSION
+            CTB_PLUGIN_VERSION
         );
         
         // Enqueue admin JS
@@ -319,7 +319,7 @@ class CTB_Admin {
             'ctb-admin-script',
             CTB_PLUGIN_URL . 'assets/admin/admin.js',
             ['jquery'],
-            CTB_VERSION,
+            CTB_PLUGIN_VERSION,
             true
         );
         

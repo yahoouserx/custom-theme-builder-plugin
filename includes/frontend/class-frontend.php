@@ -20,6 +20,11 @@ class CTB_Frontend {
     private $current_template_id = null;
     
     /**
+     * Flag to prevent infinite recursion
+     */
+    private $loading_template = false;
+    
+    /**
      * Get instance
      */
     public static function instance() {
@@ -176,6 +181,30 @@ class CTB_Frontend {
             return $template;
         }
         
+        // Prevent infinite recursion
+        if ($this->loading_template) {
+            return $template;
+        }
+        
+        // Special handling for WooCommerce single product pages
+        if (function_exists('is_product') && is_product()) {
+            // Only apply content replacement for single product templates
+            $custom_template = CTB_Template_Loader::get_template_for_current_page();
+            
+            if ($custom_template) {
+                $this->current_template_id = $custom_template;
+                $template_type = CTB_Template_Loader::get_template_type($custom_template);
+                
+                // For WooCommerce products, always use content replacement to avoid infinite loading
+                if ($template_type === 'content' || $template_type === 'full_page') {
+                    add_filter('the_content', [$this, 'replace_content'], 999);
+                    add_filter('single_post_title', [$this, 'maybe_replace_title'], 999);
+                }
+            }
+            
+            return $template;
+        }
+        
         $custom_template = CTB_Template_Loader::get_template_for_current_page();
         
         if ($custom_template) {
@@ -185,8 +214,9 @@ class CTB_Frontend {
             // Get template type to determine how to handle it
             $template_type = CTB_Template_Loader::get_template_type($custom_template);
             
-            // Only replace full template for full_page types
-            if ($template_type === 'full_page') {
+            // Only replace full template for full_page types (but not for WooCommerce products)
+            if ($template_type === 'full_page' && !function_exists('is_product')) {
+                $this->loading_template = true;
                 return $this->get_plugin_template_path();
             }
             

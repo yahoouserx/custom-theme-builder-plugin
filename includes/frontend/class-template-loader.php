@@ -20,6 +20,11 @@ class CTB_Template_Loader {
     private static $active_templates = null;
     
     /**
+     * Flag to prevent infinite recursion in template loading
+     */
+    private static $loading_template = false;
+    
+    /**
      * Get instance
      */
     public static function instance() {
@@ -89,6 +94,11 @@ class CTB_Template_Loader {
         
         $matches = false;
         
+        // Skip evaluation if we're already in template loading to prevent recursion
+        if (self::$loading_template && in_array($type, ['post_type', 'woocommerce_product_category', 'woocommerce_product_tag'])) {
+            return false;
+        }
+        
         switch ($type) {
             case 'entire_site':
                 $matches = true;
@@ -99,7 +109,12 @@ class CTB_Template_Loader {
                 break;
                 
             case 'post_type':
-                $matches = is_singular($value) || is_post_type_archive($value);
+                // Special handling for WooCommerce products to avoid infinite loading
+                if ($value === 'product' && function_exists('is_product') && is_product()) {
+                    $matches = true;
+                } else {
+                    $matches = is_singular($value) || is_post_type_archive($value);
+                }
                 break;
                 
             case 'page':
@@ -184,30 +199,30 @@ class CTB_Template_Loader {
                 
             case 'woocommerce_product_category':
                 if (class_exists('WooCommerce')) {
-                    $matches = is_product_category($value) || (is_product() && has_term($value, 'product_cat'));
+                    $matches = is_product_category($value) || (function_exists('is_product') && is_product() && has_term($value, 'product_cat'));
                 }
                 break;
                 
             case 'woocommerce_product_tag':
                 if (class_exists('WooCommerce')) {
-                    $matches = is_product_tag($value) || (is_product() && has_term($value, 'product_tag'));
+                    $matches = is_product_tag($value) || (function_exists('is_product') && is_product() && has_term($value, 'product_tag'));
                 }
                 break;
                 
             case 'woocommerce_cart':
-                if (class_exists('WooCommerce')) {
+                if (class_exists('WooCommerce') && function_exists('is_cart')) {
                     $matches = is_cart();
                 }
                 break;
                 
             case 'woocommerce_checkout':
-                if (class_exists('WooCommerce')) {
+                if (class_exists('WooCommerce') && function_exists('is_checkout')) {
                     $matches = is_checkout();
                 }
                 break;
                 
             case 'woocommerce_account':
-                if (class_exists('WooCommerce')) {
+                if (class_exists('WooCommerce') && function_exists('is_account_page')) {
                     $matches = is_account_page();
                 }
                 break;
@@ -513,6 +528,13 @@ class CTB_Template_Loader {
      * Get template for current page based on conditions only
      */
     public static function get_template_for_current_page() {
+        // Prevent infinite recursion
+        if (self::$loading_template) {
+            return false;
+        }
+        
+        self::$loading_template = true;
+        
         // Get all active templates
         $templates = get_posts([
             'post_type' => 'ctb_template',
@@ -530,6 +552,7 @@ class CTB_Template_Loader {
         ]);
         
         $instance = self::instance();
+        $result = false;
         
         // Check each template's conditions
         foreach ($templates as $template) {
@@ -546,12 +569,14 @@ class CTB_Template_Loader {
                 }
                 
                 if ($any_match) {
-                    return $template->ID;
+                    $result = $template->ID;
+                    break;
                 }
             }
         }
         
-        return false;
+        self::$loading_template = false;
+        return $result;
     }
     
     /**
