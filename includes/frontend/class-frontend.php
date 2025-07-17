@@ -403,8 +403,10 @@ class CTB_Frontend {
         // Emergency footer template
         add_action('wp_footer', [$this, 'emergency_footer_template'], 0);
         
-        // Emergency product template
-        if (function_exists('is_product') && is_product()) {
+        // Emergency product template - try multiple detection methods
+        if ((function_exists('is_product') && is_product()) || 
+            is_singular('product') || 
+            get_post_type() === 'product') {
             add_filter('the_content', [$this, 'emergency_product_template'], 999);
         }
     }
@@ -486,24 +488,61 @@ class CTB_Frontend {
      * Emergency product template
      */
     public function emergency_product_template($content) {
-        // Only on single product pages
-        if (!is_singular('product')) {
+        // Enhanced product page detection
+        $is_product_page = false;
+        
+        // Multiple methods to detect product pages
+        if (function_exists('is_product') && is_product()) {
+            $is_product_page = true;
+        } elseif (is_singular('product')) {
+            $is_product_page = true;
+        } elseif (get_post_type() === 'product') {
+            $is_product_page = true;
+        }
+        
+        if (function_exists('error_log')) {
+            error_log('CTB Debug: Emergency product template called');
+            error_log('CTB Debug: is_product_page: ' . ($is_product_page ? 'true' : 'false'));
+            error_log('CTB Debug: get_post_type(): ' . get_post_type());
+            error_log('CTB Debug: is_singular(product): ' . (is_singular('product') ? 'true' : 'false'));
+        }
+        
+        if (!$is_product_page) {
             return $content;
         }
         
-        // Get templates with "product" in the title
-        $templates = get_posts([
+        // Get ALL templates, then filter by title
+        $all_templates = get_posts([
             'post_type' => 'ctb_template',
             'post_status' => 'publish',
-            'posts_per_page' => 1,
-            's' => 'product'
+            'posts_per_page' => -1,
+            'orderby' => 'date',
+            'order' => 'DESC'
         ]);
         
-        if (!empty($templates)) {
-            $template = $templates[0];
+        $product_templates = [];
+        foreach ($all_templates as $template) {
+            if (stripos($template->post_title, 'product') !== false) {
+                $product_templates[] = $template;
+            }
+        }
+        
+        if (function_exists('error_log')) {
+            error_log('CTB Debug: Found ' . count($all_templates) . ' total templates');
+            error_log('CTB Debug: Found ' . count($product_templates) . ' product templates');
+            foreach ($product_templates as $template) {
+                error_log('CTB Debug: Product template: ID=' . $template->ID . ', Title=' . $template->post_title);
+            }
+        }
+        
+        if (!empty($product_templates)) {
+            $template = $product_templates[0];
             $template_content = $this->get_template_content($template->ID);
             
             if ($template_content) {
+                if (function_exists('error_log')) {
+                    error_log('CTB Debug: Rendering product template ID: ' . $template->ID);
+                }
                 return '<div class="emergency-product-template">' . $template_content . '</div>';
             }
         }
