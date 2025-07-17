@@ -511,166 +511,36 @@ class CTB_Frontend {
         // Create temporary template file with proper styling
         $temp_template = get_temp_dir() . 'ctb-product-template.php';
         
-        $template_content = '<!DOCTYPE html>
-<html <?php language_attributes(); ?>>
-<head>
-    <meta charset="<?php bloginfo("charset"); ?>">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <?php wp_head(); ?>
-    <style>
-    body {
-        margin: 0;
-        padding: 0;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        background: #ffffff;
-        line-height: 1.6;
-    }
-    .ctb-full-template {
-        width: 100vw;
-        min-height: 100vh;
-        padding: 0;
-        margin: 0;
-        background: #ffffff;
-        overflow-x: hidden;
-    }
-    .ctb-template-wrapper {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 40px 20px;
-        background: #fff;
-        position: relative;
-        z-index: 1;
-    }
-    
-    /* Reset all inherited styles */
-    .ctb-template-wrapper,
-    .ctb-template-wrapper * {
-        box-sizing: border-box !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        border: none !important;
-        outline: none !important;
-        background: transparent !important;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-        text-decoration: none !important;
-        list-style: none !important;
-    }
-    
-    /* Re-apply wanted styles */
-    .ctb-template-wrapper {
-        padding: 40px 20px !important;
-        background: #fff !important;
-    }
-    
-    .ctb-template-wrapper p {
-        margin-bottom: 1.2em !important;
-        line-height: 1.7 !important;
-        font-size: 16px !important;
-        color: #333 !important;
-        display: block !important;
-    }
-    
-    .ctb-template-wrapper h1,
-    .ctb-template-wrapper h2,
-    .ctb-template-wrapper h3,
-    .ctb-template-wrapper h4,
-    .ctb-template-wrapper h5,
-    .ctb-template-wrapper h6 {
-        margin-top: 1.5em !important;
-        margin-bottom: 0.8em !important;
-        color: #222 !important;
-        font-weight: 600 !important;
-        display: block !important;
-    }
-    
-    .ctb-template-wrapper h1 { 
-        font-size: 2.5em !important; 
-        line-height: 1.2 !important;
-    }
-    .ctb-template-wrapper h2 { 
-        font-size: 2em !important; 
-        line-height: 1.3 !important;
-    }
-    .ctb-template-wrapper h3 { 
-        font-size: 1.5em !important; 
-        line-height: 1.4 !important;
-    }
-    
-    .ctb-template-wrapper img {
-        max-width: 100% !important;
-        height: auto !important;
-        display: block !important;
-        margin: 20px 0 !important;
-    }
-    
-    .ctb-template-wrapper div,
-    .ctb-template-wrapper section,
-    .ctb-template-wrapper article {
-        display: block !important;
-        margin-bottom: 1em !important;
-    }
-    
-    .ctb-template-wrapper a {
-        color: #0073aa !important;
-        text-decoration: underline !important;
-    }
-    
-    .ctb-template-wrapper ul,
-    .ctb-template-wrapper ol {
-        margin: 1em 0 !important;
-        padding-left: 2em !important;
-        list-style: disc !important;
-    }
-    
-    .ctb-template-wrapper li {
-        margin-bottom: 0.5em !important;
-        list-style: inherit !important;
-    }
-    
-    /* Block editor styles */
-    .ctb-template-wrapper .wp-block-group {
-        margin: 2em 0 !important;
-        display: block !important;
-    }
-    
-    .ctb-template-wrapper .wp-block-columns {
-        display: flex !important;
-        flex-wrap: wrap !important;
-        gap: 20px !important;
-        margin: 2em 0 !important;
-    }
-    
-    .ctb-template-wrapper .wp-block-column {
-        flex: 1 !important;
-        min-width: 250px !important;
-        display: block !important;
-    }
-    
-    /* Responsive */
-    @media (max-width: 768px) {
-        .ctb-template-wrapper {
-            padding: 20px 15px !important;
-        }
-        .ctb-template-wrapper h1 { font-size: 2em !important; }
-        .ctb-template-wrapper h2 { font-size: 1.5em !important; }
-        .ctb-template-wrapper .wp-block-columns {
-            flex-direction: column !important;
-        }
-    }
-    </style>
-</head>
-<body <?php body_class("ctb-custom-template"); ?>>
-    <?php wp_body_open(); ?>
-    
-    <div class="ctb-full-template">
-        <div class="ctb-template-wrapper">
-            ' . $content . '
+        $template_content = '<?php
+        // Simple template with basic styling
+        get_header(); ?>
+        
+        <div style="
+            max-width: 1200px; 
+            margin: 50px auto; 
+            padding: 40px; 
+            background: white; 
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        ">
+            <div style="border-bottom: 3px solid #0073aa; padding-bottom: 20px; margin-bottom: 30px;">
+                <h1 style="margin: 0; color: #0073aa; font-size: 2.5em;">Custom Product Template</h1>
+                <p style="margin: 10px 0 0 0; color: #666; font-size: 16px;">Template is loading correctly</p>
+            </div>
+            
+            <div style="background: #f9f9f9; padding: 20px; border-left: 4px solid #0073aa; margin: 20px 0;">
+                ' . wpautop($content) . '
+            </div>
+            
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #999; font-size: 14px;">
+                Template loaded via Custom Theme Builder Plugin
+            </div>
         </div>
-    </div>
-    
-    <?php wp_footer(); ?>
-</body>
-</html>';
+        
+        <?php get_footer();';
         
         file_put_contents($temp_template, $template_content);
         
