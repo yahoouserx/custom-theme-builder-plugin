@@ -57,8 +57,8 @@ class CTB_Frontend {
         add_filter('template_include', [$this, 'template_include'], 999);
         
         // Additional header/footer injection hooks
-        add_action('wp_head', [$this, 'inject_header_template'], 0);
-        add_action('wp_footer', [$this, 'inject_footer_template'], 0);
+        add_action('wp_body_open', [$this, 'inject_header_template'], 1);
+        add_action('wp_footer', [$this, 'inject_footer_template'], 1);
         
         // Preview functionality
 
@@ -199,11 +199,17 @@ class CTB_Frontend {
                 $this->current_template_id = $custom_template;
                 $template_type = CTB_Template_Loader::get_template_type($custom_template);
                 
-                // For WooCommerce products, always use content replacement to avoid infinite loading
-                if ($template_type === 'content' || $template_type === 'full_page') {
-                    add_filter('the_content', [$this, 'replace_content'], 999);
-                    add_filter('single_post_title', [$this, 'maybe_replace_title'], 999);
-                }
+                // For WooCommerce products, force content replacement to avoid infinite loading
+                add_filter('the_content', [$this, 'replace_content'], 999);
+                add_filter('single_post_title', [$this, 'maybe_replace_title'], 999);
+                
+                // Also try to hook into WooCommerce specific hooks
+                add_action('woocommerce_single_product_summary', [$this, 'replace_woo_content'], 1);
+                remove_action('woocommerce_single_product_summary', 'woocommerce_template_single_title', 5);
+                remove_action('woocommerce_single_product_summary', 'woocommerce_template_single_rating', 10);
+                remove_action('woocommerce_single_product_summary', 'woocommerce_template_single_price', 10);
+                remove_action('woocommerce_single_product_summary', 'woocommerce_template_single_excerpt', 20);
+                remove_action('woocommerce_single_product_summary', 'woocommerce_template_single_add_to_cart', 30);
             }
             
             return $template;
@@ -335,15 +341,17 @@ class CTB_Frontend {
         $header_template = CTB_Template_Loader::get_template_for_location('header');
         
         if ($header_template) {
+            // Add CSS to hide default headers first
+            echo '<style>
+                .site-header, header.site-header, .main-header, .header, header, .masthead, .site-branding { display: none !important; }
+                body.ctb-custom-header .site-header { display: none !important; }
+                #ctb-header-template { position: fixed; top: 0; left: 0; right: 0; z-index: 9999; }
+                body { padding-top: 80px; }
+            </style>';
+            
             echo '<div id="ctb-header-template">';
             $this->render_template($header_template);
             echo '</div>';
-            
-            // Add CSS to hide default headers
-            echo '<style>
-                .site-header, header.site-header, .main-header, .header, header { display: none !important; }
-                body.ctb-custom-header .site-header { display: none !important; }
-            </style>';
         }
     }
     
@@ -354,15 +362,27 @@ class CTB_Frontend {
         $footer_template = CTB_Template_Loader::get_template_for_location('footer');
         
         if ($footer_template) {
-            echo '<div id="ctb-footer-template">';
-            $this->render_template($footer_template);
-            echo '</div>';
-            
             // Add CSS to hide default footers
             echo '<style>
                 .site-footer, footer.site-footer, .main-footer, .footer, footer { display: none !important; }
                 body.ctb-custom-footer .site-footer { display: none !important; }
             </style>';
+            
+            echo '<div id="ctb-footer-template">';
+            $this->render_template($footer_template);
+            echo '</div>';
+        }
+    }
+    
+    /**
+     * Replace WooCommerce content
+     */
+    public function replace_woo_content() {
+        if ($this->current_template_id) {
+            $template_content = $this->get_template_content($this->current_template_id);
+            if ($template_content) {
+                echo '<div class="ctb-woo-template-content">' . $template_content . '</div>';
+            }
         }
     }
 

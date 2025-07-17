@@ -110,12 +110,23 @@ class CTB_Template_Loader {
                 
             case 'post_type':
                 // Special handling for WooCommerce products to avoid infinite loading
-                if ($value === 'product' && function_exists('is_product')) {
-                    $matches = is_product();
-                } elseif ($value === 'product' && function_exists('is_woocommerce') && is_woocommerce()) {
-                    $matches = is_product();
+                if ($value === 'product') {
+                    if (function_exists('is_product') && is_product()) {
+                        $matches = true;
+                    } elseif (function_exists('is_woocommerce') && is_woocommerce()) {
+                        $matches = is_product();
+                    } elseif (is_singular('product')) {
+                        $matches = true;
+                    } else {
+                        $matches = false;
+                    }
                 } else {
                     $matches = is_singular($value) || is_post_type_archive($value);
+                }
+                
+                // Debug logging for WooCommerce products
+                if ($value === 'product' && function_exists('error_log')) {
+                    error_log('CTB Debug: Evaluating product condition, matches: ' . ($matches ? 'true' : 'false'));
                 }
                 break;
                 
@@ -621,6 +632,11 @@ class CTB_Template_Loader {
         // Debug: Log template matching for WooCommerce products
         if (function_exists('is_product') && is_product() && function_exists('error_log')) {
             error_log('CTB Debug: WooCommerce product page detected, template result: ' . ($result ?: 'none'));
+            error_log('CTB Debug: Total templates found: ' . count($templates));
+            foreach ($templates as $template) {
+                $conditions = CTB_Conditions::get_template_conditions($template->ID);
+                error_log('CTB Debug: Template ID ' . $template->ID . ' has ' . count($conditions) . ' conditions');
+            }
         }
         
         self::$loading_template = false;
