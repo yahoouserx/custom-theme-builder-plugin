@@ -100,7 +100,8 @@ class CTB_Template_Loader {
         }
         
         // Skip evaluation if we're already in template loading to prevent recursion
-        if (self::$loading_template && in_array($type, ['post_type', 'woocommerce_product_category', 'woocommerce_product_tag'])) {
+        // BUT allow product evaluation for debugging
+        if (self::$loading_template && in_array($type, ['woocommerce_product_category', 'woocommerce_product_tag'])) {
             return false;
         }
         
@@ -116,14 +117,28 @@ class CTB_Template_Loader {
             case 'post_type':
                 // Special handling for WooCommerce products to avoid infinite loading
                 if ($value === 'product') {
+                    // Try multiple methods to detect WooCommerce product pages
+                    $matches = false;
+                    
+                    // Method 1: WooCommerce is_product() function
                     if (function_exists('is_product') && is_product()) {
                         $matches = true;
-                    } elseif (function_exists('is_woocommerce') && is_woocommerce()) {
-                        $matches = is_product();
-                    } elseif (is_singular('product')) {
+                    }
+                    // Method 2: Check post type directly
+                    elseif (get_post_type() === 'product') {
                         $matches = true;
-                    } else {
-                        $matches = false;
+                    }
+                    // Method 3: Check if singular product
+                    elseif (is_singular('product')) {
+                        $matches = true;
+                    }
+                    // Method 4: Check current post type via global post
+                    elseif (isset($GLOBALS['post']) && $GLOBALS['post']->post_type === 'product') {
+                        $matches = true;
+                    }
+                    // Method 5: Check query vars
+                    elseif (get_query_var('post_type') === 'product') {
+                        $matches = true;
                     }
                 } else {
                     $matches = is_singular($value) || is_post_type_archive($value);
@@ -135,6 +150,10 @@ class CTB_Template_Loader {
                     error_log('CTB Debug: is_product() exists: ' . (function_exists('is_product') ? 'yes' : 'no'));
                     error_log('CTB Debug: is_product() result: ' . (function_exists('is_product') && is_product() ? 'true' : 'false'));
                     error_log('CTB Debug: is_singular("product"): ' . (is_singular('product') ? 'true' : 'false'));
+                    error_log('CTB Debug: get_post_type(): ' . get_post_type());
+                    error_log('CTB Debug: is_singular(): ' . (is_singular() ? 'true' : 'false'));
+                    error_log('CTB Debug: WooCommerce active: ' . (class_exists('WooCommerce') ? 'yes' : 'no'));
+                    error_log('CTB Debug: Current post ID: ' . get_the_ID());
                     error_log('CTB Debug: Final matches result: ' . ($matches ? 'true' : 'false'));
                 }
                 break;
