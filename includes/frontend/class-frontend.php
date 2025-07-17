@@ -517,27 +517,37 @@ class CTB_Frontend {
         echo '<script>
         document.addEventListener("DOMContentLoaded", function() {
             setTimeout(function() {
-                // Find the ENTIRE product area to replace everything
+                // Find the COMPLETE page container to replace everything
                 var targets = [
-                    ".woocommerce-page",
-                    ".single-product",
-                    ".single.single-product",
-                    ".woocommerce.single-product",
-                    "main.site-main",
-                    ".content-area",
+                    "body.single-product",
+                    "body.woocommerce-page", 
+                    ".site-content",
+                    "#primary",
                     "#main",
+                    ".content-area",
+                    "main",
                     ".main-content",
-                    "#content"
+                    "#content",
+                    ".container",
+                    ".site-main"
                 ];
                 
                 var replaced = false;
                 for (var i = 0; i < targets.length && !replaced; i++) {
                     var element = document.querySelector(targets[i]);
                     if (element) {
-                        // Replace the ENTIRE content of the page container - NO SHORTCODE PROCESSING
-                        element.innerHTML = \'<div class="ctb-full-product-template">\' + ' . json_encode($content) . ' + \'</div>\';
+                        // Clear ALL existing content and replace with template
+                        element.innerHTML = "";
+                        element.innerHTML = \'<div class="ctb-complete-template" style="width:100%; min-height:100vh;">\' + ' . json_encode($content) . ' + \'</div>\';
+                        
+                        // Also hide header and footer if they exist
+                        var header = document.querySelector("header, .site-header, #masthead");
+                        var footer = document.querySelector("footer, .site-footer, #colophon");
+                        if (header) header.style.display = "none";
+                        if (footer) footer.style.display = "none";
+                        
                         replaced = true;
-                        console.log("CTB: Replaced ENTIRE product page in " + targets[i]);
+                        console.log("CTB: Replaced COMPLETE page template in " + targets[i]);
                         break;
                     }
                 }
