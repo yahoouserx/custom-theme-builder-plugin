@@ -40,6 +40,7 @@ class CTB_Admin {
         add_action('add_meta_boxes', [$this, 'add_meta_boxes']);
         add_action('save_post', [$this, 'save_template_meta']);
         add_filter('post_row_actions', [$this, 'add_template_actions'], 10, 2);
+        add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
 
         add_action('wp_ajax_ctb_duplicate_template', [$this, 'ajax_duplicate_template']);
         add_filter('manage_ctb_template_posts_columns', [$this, 'add_template_columns']);
@@ -297,67 +298,54 @@ class CTB_Admin {
     }
     
     /**
+     * Enqueue admin scripts and styles
+     */
+    public function enqueue_admin_assets($hook) {
+        // Only load on our admin pages
+        if (strpos($hook, 'ctb-') === false && $hook !== 'post.php' && $hook !== 'post-new.php') {
+            return;
+        }
+        
+        // Enqueue admin CSS
+        wp_enqueue_style(
+            'ctb-admin-style',
+            CTB_PLUGIN_URL . 'assets/admin/admin.css',
+            [],
+            CTB_VERSION
+        );
+        
+        // Enqueue admin JS
+        wp_enqueue_script(
+            'ctb-admin-script',
+            CTB_PLUGIN_URL . 'assets/admin/admin.js',
+            ['jquery'],
+            CTB_VERSION,
+            true
+        );
+        
+        // Localize script with proper nonce
+        wp_localize_script('ctb-admin-script', 'ctb_admin_vars', [
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('ctb_template_action'),
+            'bulk_nonce' => wp_create_nonce('ctb_bulk_action'),
+            'strings' => [
+                'confirm_delete' => __('Are you sure you want to delete this template?', 'custom-theme-builder'),
+                'confirm_bulk_delete' => __('Are you sure you want to delete the selected templates?', 'custom-theme-builder'),
+                'processing' => __('Processing...', 'custom-theme-builder'),
+                'error' => __('An error occurred. Please try again.', 'custom-theme-builder'),
+                'success' => __('Operation completed successfully.', 'custom-theme-builder'),
+                'no_templates_selected' => __('Please select at least one template.', 'custom-theme-builder'),
+                'no_action_selected' => __('Please select an action.', 'custom-theme-builder'),
+            ]
+        ]);
+    }
+
+    /**
      * Render templates page
      */
     public function render_templates_page() {
-        ?>
-        <div class="wrap ctb-templates-wrap">
-            <div class="ctb-header">
-                <h1 class="ctb-title">
-                    <span class="ctb-icon dashicons dashicons-admin-customizer"></span>
-                    <?php _e('Custom Templates', 'custom-theme-builder'); ?>
-                    <a href="<?php echo admin_url('post-new.php?post_type=ctb_template'); ?>" class="page-title-action ctb-add-template">
-                        <span class="dashicons dashicons-plus-alt"></span>
-                        <?php _e('Add New Template', 'custom-theme-builder'); ?>
-                    </a>
-                </h1>
-                <p class="ctb-subtitle"><?php _e('Create and manage custom templates with conditions-based display rules', 'custom-theme-builder'); ?></p>
-            </div>
-
-            <div class="ctb-stats-cards">
-                <div class="ctb-stats-card">
-                    <div class="ctb-stats-icon">
-                        <span class="dashicons dashicons-admin-page"></span>
-                    </div>
-                    <div class="ctb-stats-content">
-                        <h3><?php echo $this->get_templates_count(); ?></h3>
-                        <p><?php _e('Total Templates', 'custom-theme-builder'); ?></p>
-                    </div>
-                </div>
-                <div class="ctb-stats-card">
-                    <div class="ctb-stats-icon ctb-stats-icon-success">
-                        <span class="dashicons dashicons-yes"></span>
-                    </div>
-                    <div class="ctb-stats-content">
-                        <h3><?php echo $this->get_active_templates_count(); ?></h3>
-                        <p><?php _e('Active Templates', 'custom-theme-builder'); ?></p>
-                    </div>
-                </div>
-                <div class="ctb-stats-card">
-                    <div class="ctb-stats-icon ctb-stats-icon-warning">
-                        <span class="dashicons dashicons-clock"></span>
-                    </div>
-                    <div class="ctb-stats-content">
-                        <h3><?php echo $this->get_inactive_templates_count(); ?></h3>
-                        <p><?php _e('Inactive Templates', 'custom-theme-builder'); ?></p>
-                    </div>
-                </div>
-                <div class="ctb-stats-card">
-                    <div class="ctb-stats-icon ctb-stats-icon-info">
-                        <span class="dashicons dashicons-info"></span>
-                    </div>
-                    <div class="ctb-stats-content">
-                        <h3><?php echo $this->get_conditions_count(); ?></h3>
-                        <p><?php _e('Total Conditions', 'custom-theme-builder'); ?></p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="ctb-templates-content">
-                <?php CTB_Templates_List::instance()->render_page(); ?>
-            </div>
-        </div>
-        <?php
+        // Use the new modern UI templates list
+        CTB_Templates_List::instance()->render_page();
     }
 
     /**
