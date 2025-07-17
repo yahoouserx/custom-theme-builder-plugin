@@ -63,7 +63,7 @@ class CTB_Frontend {
     }
     
     private function template_matches_conditions($template_id) {
-        $conditions = get_post_meta($template_id, 'ctb_conditions', true);
+        $conditions = get_post_meta($template_id, '_ctb_conditions', true);
         
         if (empty($conditions)) {
             return false;
