@@ -403,10 +403,9 @@ class CTB_Frontend {
         // Emergency footer template
         add_action('wp_footer', [$this, 'emergency_footer_template'], 0);
         
-        // Emergency product template - ONLY on product pages to avoid infinite loading
-        if ((function_exists('is_product') && is_product()) || 
-            (is_singular('product')) || 
-            (get_post_type() === 'product')) {
+        // Emergency product template - ONLY on SINGLE product pages, NOT shop or archives
+        if ((function_exists('is_product') && is_product() && !is_shop() && !is_product_category()) || 
+            (is_singular('product') && !is_archive() && !is_shop())) {
             add_filter('the_content', [$this, 'emergency_product_template'], 999);
         }
     }
@@ -494,19 +493,26 @@ class CTB_Frontend {
             return $content;
         }
         
-        // Enhanced product page detection
-        $is_product_page = false;
+        // STRICT PRODUCT PAGE DETECTION - EXCLUDE SHOP AND ARCHIVE PAGES
+        $is_single_product_page = false;
         
-        // Multiple methods to detect product pages
-        if (function_exists('is_product') && is_product()) {
-            $is_product_page = true;
-        } elseif (is_singular('product')) {
-            $is_product_page = true;
-        } elseif (get_post_type() === 'product') {
-            $is_product_page = true;
+        // Only single product pages, NOT shop archives or category pages
+        if (function_exists('is_product') && is_product() && !is_shop() && !is_product_category() && !is_product_tag()) {
+            $is_single_product_page = true;
+        } elseif (is_singular('product') && !is_shop() && !is_archive()) {
+            $is_single_product_page = true;
         }
         
-        if (!$is_product_page) {
+        // Exit if not a single product page
+        if (!$is_single_product_page) {
+            return $content;
+        }
+        
+        // Additional safety check - if this is shop or archive, do NOT proceed
+        if (function_exists('is_shop') && is_shop()) {
+            return $content;
+        }
+        if (is_archive() || is_home() || is_front_page()) {
             return $content;
         }
         
@@ -514,7 +520,10 @@ class CTB_Frontend {
         $already_ran = true;
         
         if (function_exists('error_log')) {
-            error_log('CTB Debug: Emergency product template called - SAFE MODE');
+            error_log('CTB Debug: Emergency SINGLE product template called - SAFE MODE');
+            error_log('CTB Debug: is_shop(): ' . (function_exists('is_shop') && is_shop() ? 'true' : 'false'));
+            error_log('CTB Debug: is_archive(): ' . (is_archive() ? 'true' : 'false'));
+            error_log('CTB Debug: is_singular(product): ' . (is_singular('product') ? 'true' : 'false'));
         }
         
         // Get template with "product" in title - SIMPLE APPROACH
