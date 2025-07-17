@@ -20,6 +20,7 @@
             this.bindEvents();
             this.initFilters();
             this.initAnimations();
+            this.initConditions();
         },
 
         /**
@@ -48,6 +49,12 @@
             
             // Keyboard shortcuts
             $(document).on('keydown', this.handleKeyboardShortcuts);
+            
+            // Conditions meta box events
+            $(document).on('click', '#ctb-add-condition', this.addCondition);
+            $(document).on('click', '#ctb-add-condition-group', this.addConditionGroup);
+            $(document).on('click', '.ctb-remove-condition', this.removeCondition);
+            $(document).on('change', '.ctb-condition-type', this.handleConditionTypeChange);
         },
 
         /**
@@ -653,6 +660,200 @@
             
             // Update URL without reloading
             window.history.replaceState({}, '', url);
+        },
+
+        /**
+         * Initialize conditions functionality
+         */
+        initConditions: function() {
+            this.conditionIndex = $('.ctb-condition-row').length;
+            
+            // Update condition indices on page load
+            this.updateConditionIndices();
+        },
+
+        /**
+         * Add new condition
+         */
+        addCondition: function(e) {
+            e.preventDefault();
+            
+            const self = CTB_Admin;
+            const $conditionsList = $('#ctb-conditions-list');
+            const $noConditions = $('.ctb-no-conditions');
+            
+            // Remove no conditions message if it exists
+            if ($noConditions.length > 0) {
+                $noConditions.remove();
+            }
+            
+            // Create new condition row
+            const conditionIndex = self.conditionIndex++;
+            const conditionRow = self.createConditionRow(conditionIndex);
+            
+            // Add to DOM
+            $conditionsList.append(conditionRow);
+            
+            // Focus on the new condition type select
+            $conditionsList.find('.ctb-condition-row').last().find('.ctb-condition-type').focus();
+            
+            // Update indices
+            self.updateConditionIndices();
+        },
+
+        /**
+         * Add condition group
+         */
+        addConditionGroup: function(e) {
+            e.preventDefault();
+            
+            const self = CTB_Admin;
+            const $conditionsList = $('#ctb-conditions-list');
+            
+            // Create condition group wrapper
+            const groupHtml = `
+                <div class="ctb-condition-group">
+                    <div class="ctb-condition-group-header">
+                        <span class="ctb-condition-group-label">OR</span>
+                        <button type="button" class="button ctb-remove-condition-group">
+                            <span class="dashicons dashicons-no-alt"></span>
+                        </button>
+                    </div>
+                    <div class="ctb-condition-group-conditions">
+                        ${self.createConditionRow(self.conditionIndex++)}
+                    </div>
+                </div>
+            `;
+            
+            $conditionsList.append(groupHtml);
+            self.updateConditionIndices();
+        },
+
+        /**
+         * Remove condition
+         */
+        removeCondition: function(e) {
+            e.preventDefault();
+            
+            const self = CTB_Admin;
+            const $conditionRow = $(this).closest('.ctb-condition-row');
+            const $conditionsList = $('#ctb-conditions-list');
+            
+            // Animate removal
+            $conditionRow.fadeOut(300, function() {
+                $conditionRow.remove();
+                
+                // Check if we need to show no conditions message
+                if ($conditionsList.find('.ctb-condition-row').length === 0) {
+                    $conditionsList.html('<div class="ctb-no-conditions"><p>No conditions set. This template will not be displayed anywhere.</p></div>');
+                }
+                
+                self.updateConditionIndices();
+            });
+        },
+
+        /**
+         * Handle condition type change
+         */
+        handleConditionTypeChange: function() {
+            const $this = $(this);
+            const $conditionRow = $this.closest('.ctb-condition-row');
+            const $valueField = $conditionRow.find('.ctb-condition-value');
+            const conditionType = $this.val();
+            const index = $conditionRow.data('index');
+            
+            // Show loading state
+            $valueField.html('<span class="ctb-loading-spinner">Loading...</span>');
+            
+            // Make AJAX request to get condition value field
+            $.ajax({
+                url: ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'ctb_get_condition_value_field',
+                    condition_type: conditionType,
+                    index: index,
+                    nonce: ctb_admin_vars.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $valueField.html(response.data.html);
+                    } else {
+                        $valueField.html('<span class="error">Error loading options</span>');
+                    }
+                },
+                error: function() {
+                    $valueField.html('<span class="error">Error loading options</span>');
+                }
+            });
+        },
+
+        /**
+         * Create condition row HTML
+         */
+        createConditionRow: function(index) {
+            return `
+                <div class="ctb-condition-row" data-index="${index}">
+                    <div class="ctb-condition-controls">
+                        <select name="ctb_conditions[${index}][type]" class="ctb-condition-type">
+                            <option value="">Select Condition</option>
+                            <option value="entire_site">Entire Site</option>
+                            <option value="front_page">Front Page</option>
+                            <option value="post_type">Post Type</option>
+                            <option value="specific_post">Specific Post</option>
+                            <option value="category">Category</option>
+                            <option value="tag">Tag</option>
+                            <option value="page">Page</option>
+                            <option value="user_role">User Role</option>
+                            <option value="user_status">User Status</option>
+                            <option value="archive">Archive</option>
+                            <option value="search_results">Search Results</option>
+                            <option value="error_404">404 Error</option>
+                            <option value="date">Date Archive</option>
+                            <option value="author">Author Archive</option>
+                            <option value="woocommerce_shop">WooCommerce Shop</option>
+                            <option value="woocommerce_product_category">WooCommerce Product Category</option>
+                            <option value="woocommerce_product_tag">WooCommerce Product Tag</option>
+                            <option value="woocommerce_cart">WooCommerce Cart</option>
+                            <option value="woocommerce_checkout">WooCommerce Checkout</option>
+                            <option value="woocommerce_account">WooCommerce Account</option>
+                        </select>
+                        
+                        <select name="ctb_conditions[${index}][operator]" class="ctb-condition-operator">
+                            <option value="include">Include</option>
+                            <option value="exclude">Exclude</option>
+                        </select>
+                        
+                        <div class="ctb-condition-value">
+                            <span>Select condition type first</span>
+                        </div>
+                        
+                        <button type="button" class="button ctb-remove-condition" aria-label="Remove condition">
+                            <span class="dashicons dashicons-no-alt"></span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        },
+
+        /**
+         * Update condition indices
+         */
+        updateConditionIndices: function() {
+            $('#ctb-conditions-list .ctb-condition-row').each(function(index) {
+                const $row = $(this);
+                $row.attr('data-index', index);
+                
+                // Update input names
+                $row.find('select, input').each(function() {
+                    const $input = $(this);
+                    const name = $input.attr('name');
+                    if (name) {
+                        const newName = name.replace(/\[\d+\]/, '[' + index + ']');
+                        $input.attr('name', newName);
+                    }
+                });
+            });
         },
 
         /**

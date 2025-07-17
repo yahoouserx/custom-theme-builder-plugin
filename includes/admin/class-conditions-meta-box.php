@@ -39,6 +39,7 @@ class CTB_Conditions_Meta_Box {
         add_action('save_post', [$this, 'save_conditions']);
         add_action('wp_ajax_ctb_add_condition', [$this, 'ajax_add_condition']);
         add_action('wp_ajax_ctb_get_condition_options', [$this, 'ajax_get_condition_options']);
+        add_action('wp_ajax_ctb_get_condition_value_field', [$this, 'ajax_get_condition_value_field']);
     }
     
     /**
@@ -723,6 +724,33 @@ class CTB_Conditions_Meta_Box {
         
         ob_start();
         $this->render_condition_row($condition, $index);
+        $html = ob_get_clean();
+        
+        wp_send_json_success(['html' => $html]);
+    }
+
+    /**
+     * AJAX: Get condition value field
+     */
+    public function ajax_get_condition_value_field() {
+        // Check nonce
+        if (!wp_verify_nonce($_POST['nonce'], 'ctb_admin_nonce')) {
+            wp_die('Security check failed');
+        }
+        
+        $condition_type = sanitize_text_field($_POST['condition_type']);
+        $index = intval($_POST['index']);
+        
+        // Create a mock condition array for rendering
+        $condition = [
+            'type' => $condition_type,
+            'operator' => 'include',
+            'value' => ''
+        ];
+        
+        // Start output buffering
+        ob_start();
+        $this->render_condition_value_field($condition, $index);
         $html = ob_get_clean();
         
         wp_send_json_success(['html' => $html]);

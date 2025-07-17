@@ -711,3 +711,275 @@
     color: #1e40af;
     border: 1px solid #3b82f6;
 }
+
+/* Conditions Meta Box Styles */
+#ctb-conditions-wrapper {
+    background: white;
+    border-radius: 12px;
+    padding: 0;
+    margin: 0;
+}
+
+#ctb-conditions-wrapper > p {
+    background: #f8fafc;
+    padding: 16px 20px;
+    margin: 0;
+    border-bottom: 1px solid #e2e8f0;
+    color: #64748b;
+    font-size: 14px;
+    border-radius: 12px 12px 0 0;
+}
+
+#ctb-conditions-list {
+    padding: 20px;
+}
+
+.ctb-no-conditions {
+    text-align: center;
+    padding: 40px 20px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 2px dashed #cbd5e1;
+    margin-bottom: 20px;
+}
+
+.ctb-no-conditions p {
+    color: #64748b;
+    font-size: 14px;
+    margin: 0;
+}
+
+.ctb-condition-row {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.ctb-condition-row:hover {
+    border-color: #6366f1;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+}
+
+.ctb-condition-row:last-child {
+    margin-bottom: 0;
+}
+
+.ctb-condition-controls {
+    display: grid;
+    grid-template-columns: 1fr 120px 1fr auto;
+    gap: 16px;
+    align-items: center;
+}
+
+.ctb-condition-type,
+.ctb-condition-operator,
+.ctb-condition-value select,
+.ctb-condition-value input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    background: white;
+    transition: all 0.2s ease;
+}
+
+.ctb-condition-type:focus,
+.ctb-condition-operator:focus,
+.ctb-condition-value select:focus,
+.ctb-condition-value input:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.ctb-condition-value {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ctb-condition-value input[type="text"] {
+    flex: 1;
+}
+
+.ctb-remove-condition {
+    background: #fee2e2 !important;
+    color: #dc2626 !important;
+    border: 1px solid #fecaca !important;
+    padding: 8px !important;
+    border-radius: 8px !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+}
+
+.ctb-remove-condition:hover {
+    background: #fecaca !important;
+    transform: scale(1.05);
+}
+
+.ctb-remove-condition .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.ctb-condition-actions {
+    padding: 20px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    border-radius: 0 0 12px 12px;
+    display: flex;
+    gap: 12px;
+}
+
+.ctb-condition-actions .button {
+    background: #6366f1 !important;
+    color: white !important;
+    border: none !important;
+    padding: 12px 20px !important;
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ctb-condition-actions .button:hover {
+    background: #4f46e5 !important;
+    transform: translateY(-1px);
+}
+
+.ctb-condition-actions .button:before {
+    content: "\f132";
+    font-family: dashicons;
+    font-size: 16px;
+}
+
+#ctb-add-condition-group:before {
+    content: "\f534";
+}
+
+/* Condition Value Fields */
+.ctb-condition-value-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.ctb-condition-value-field select,
+.ctb-condition-value-field input {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Condition Group Styles */
+.ctb-condition-group {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    position: relative;
+}
+
+.ctb-condition-group::before {
+    content: 'OR';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    background: #6366f1;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.ctb-condition-group .ctb-condition-row {
+    background: #f8fafc;
+    margin-bottom: 12px;
+}
+
+.ctb-condition-group .ctb-condition-row:last-child {
+    margin-bottom: 0;
+}
+
+/* Responsive Design for Conditions */
+@media (max-width: 768px) {
+    .ctb-condition-controls {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .ctb-condition-actions {
+        flex-direction: column;
+    }
+    
+    .ctb-condition-actions .button {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Loading state for conditions */
+.ctb-conditions-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.ctb-conditions-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #e5e7eb;
+    border-top: 2px solid #6366f1;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Loading spinner for condition values */
+.ctb-loading-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f3f4f6;
+    border-top: 2px solid #6366f1;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 8px;
+}
+
+/* Condition value field styling */
+.ctb-condition-value span {
+    color: #6b7280;
+    font-style: italic;
+    font-size: 14px;
+}
+
+.ctb-condition-value .error {
+    color: #dc2626;
+    font-weight: 500;
+}
+
+/* Additional meta box styling */
+.ctb-condition-row .ctb-condition-type option[value=""] {
+    color: #9ca3af;
+    font-style: italic;
+}
