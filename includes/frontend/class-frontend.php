@@ -403,7 +403,8 @@ class CTB_Frontend {
         // Emergency footer template
         add_action('wp_footer', [$this, 'emergency_footer_template'], 0);
         
-        // DISABLED ALL PRODUCT TEMPLATES - Let pages load normally first
+        // Simple product template system - safe loading
+        add_action('wp_footer', [$this, 'simple_product_template_loader'], 99);
     }
     
     /**
@@ -479,8 +480,70 @@ class CTB_Frontend {
         }
     }
     
-    // ALL PRODUCT TEMPLATE FUNCTIONS COMPLETELY REMOVED
-    // Pages will load normally without any template interference
+    /**
+     * Simple product template loader - no recursion, loads after page
+     */
+    public function simple_product_template_loader() {
+        // Only run once per page
+        static $loaded = false;
+        if ($loaded) return;
+        $loaded = true;
+        
+        // Only on single product pages, not shop or archives
+        if (!is_singular('product') || is_shop() || is_archive()) {
+            return;
+        }
+        
+        // Find templates with "product" in title
+        $templates = get_posts([
+            'post_type' => 'ctb_template',
+            'post_status' => 'publish',
+            'posts_per_page' => 1,
+            's' => 'product'
+        ]);
+        
+        if (empty($templates)) {
+            return;
+        }
+        
+        $template = $templates[0];
+        $content = get_post_field('post_content', $template->ID);
+        
+        if (empty($content)) {
+            return;
+        }
+        
+        // Use JavaScript to replace content after page loads - no PHP recursion possible
+        echo '<script>
+        document.addEventListener("DOMContentLoaded", function() {
+            setTimeout(function() {
+                // Find the main product content area
+                var targets = [
+                    ".single-product .summary",
+                    ".single-product .product-summary", 
+                    ".woocommerce-product-details__short-description",
+                    ".entry-content",
+                    ".product .summary",
+                    ".single-product-summary"
+                ];
+                
+                var replaced = false;
+                for (var i = 0; i < targets.length && !replaced; i++) {
+                    var element = document.querySelector(targets[i]);
+                    if (element) {
+                        element.innerHTML = ' . json_encode(do_shortcode($content)) . ';
+                        replaced = true;
+                        console.log("CTB: Replaced content in " + targets[i]);
+                    }
+                }
+                
+                if (!replaced) {
+                    console.log("CTB: No suitable content area found for template replacement");
+                }
+            }, 100);
+        });
+        </script>';
+    }
     
 
 
